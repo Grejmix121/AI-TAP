@@ -20,13 +20,20 @@ function getUserFingerprint() {
         ctx.font = '14px Arial';
         ctx.fillText('Fingerprint', 2, 2);
         
-        fingerprint = btoa(
+        // Добавляем больше параметров для уникальности
+        const fingerprintData = 
             navigator.userAgent +
             navigator.language +
+            navigator.platform +
             screen.width + 'x' + screen.height +
+            screen.colorDepth +
             new Date().getTimezoneOffset() +
-            canvas.toDataURL()
-        ).substring(0, 32);
+            navigator.hardwareConcurrency || '0' +
+            navigator.deviceMemory || '0' +
+            canvas.toDataURL() +
+            Math.random().toString(36).substring(2, 15); // Добавляем случайность для уникальности
+        
+        fingerprint = btoa(fingerprintData).substring(0, 64);
         
         localStorage.setItem('reminko_fingerprint', fingerprint);
     }
@@ -205,10 +212,20 @@ async function incrementCounterInSupabase(counterType) {
 async function hasUserClicked(counterType) {
     const localKey = counterType === 'wish' ? WISH_STORAGE_KEY : SOCIAL_STORAGE_PREFIX + counterType;
     
-    const client = getSupabaseClient();
+    // Ждем инициализации Supabase клиента (максимум 3 секунды)
+    let client = getSupabaseClient();
+    let attempts = 0;
+    while (!client && attempts < 30) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        client = getSupabaseClient();
+        attempts++;
+    }
+    
     if (!client) {
-        // Если Supabase недоступен, используем только localStorage
-        return localStorage.getItem(localKey) === 'true';
+        // Если Supabase недоступен после ожидания, очищаем localStorage и возвращаем false
+        // Это гарантирует, что новый пользователь не увидит "уже поддержал"
+        localStorage.removeItem(localKey);
+        return false;
     }
     
     try {
@@ -222,6 +239,13 @@ async function hasUserClicked(counterType) {
             .eq('counter_type', counterType)
             .maybeSingle();
         
+        if (error) {
+            console.error('Ошибка запроса к Supabase:', error);
+            // При ошибке очищаем localStorage и возвращаем false
+            localStorage.removeItem(localKey);
+            return false;
+        }
+        
         const hasClicked = !!data;
         
         // Обновляем localStorage на основе реальных данных из Supabase
@@ -229,7 +253,7 @@ async function hasUserClicked(counterType) {
             localStorage.setItem(localKey, 'true');
         } else {
             // Если в Supabase нет записи, но в localStorage есть - очищаем localStorage
-            // Это предотвращает обход ограничений через очистку кеша
+            // Это предотвращает показ "уже поддержал" новым пользователям
             if (localStorage.getItem(localKey) === 'true') {
                 localStorage.removeItem(localKey);
             }
@@ -238,8 +262,9 @@ async function hasUserClicked(counterType) {
         return hasClicked;
     } catch (error) {
         console.error('Ошибка проверки клика:', error);
-        // При ошибке используем localStorage как fallback
-        return localStorage.getItem(localKey) === 'true';
+        // При ошибке очищаем localStorage и возвращаем false
+        localStorage.removeItem(localKey);
+        return false;
     }
 }
 
@@ -480,8 +505,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Показываем загрузочный экран при загрузке страницы
     showLoadingScreen();
     
-    // Ждем немного для загрузки Supabase
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Ждем инициализации Supabase клиента (до 2 секунд)
+    let client = getSupabaseClient();
+    let attempts = 0;
+    while (!client && attempts < 20) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        client = getSupabaseClient();
+        attempts++;
+    }
     
     // Инициализируем начальные значения счетчиков
     await initializeCounters();
@@ -498,6 +529,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Загружаем счетчики из Supabase
     await loadWishCount();
+    // ВАЖНО: Проверяем статус пользователя ПОСЛЕ загрузки счетчиков
+    // Это гарантирует, что Supabase клиент готов
     await checkUserWishStatus();
     await loadSocialCounts();
 });
@@ -571,18 +604,38 @@ async function loadWishCount() {
 
 // Проверить статус пользователя
 async function checkUserWishStatus() {
-    const hasClicked = await hasUserClicked('wish');
-    const wishBtn = document.getElementById('wishBtn');
-    const wishNote = document.getElementById('wishNote');
-    
-    if (hasClicked && wishBtn) {
-        wishBtn.disabled = true;
-        wishBtn.classList.add('clicked');
-        wishBtn.innerHTML = '<span class="wish-btn-text">Спасибо за поддержку!</span><span class="wish-btn-emoji">💜</span>';
+    try {
+        // Всегда проверяем онлайн в Supabase, не полагаясь на localStorage
+        const hasClicked = await hasUserClicked('wish');
+        const wishBtn = document.getElementById('wishBtn');
+        const wishNote = document.getElementById('wishNote');
         
-        if (wishNote) {
-            wishNote.textContent = 'Ты уже поддержал(а) нас! Спасибо! 💜';
-            wishNote.style.display = 'block';
+        // Показываем статус только если пользователь действительно голосовал
+        if (hasClicked && wishBtn) {
+            wishBtn.disabled = true;
+            wishBtn.classList.add('clicked');
+            wishBtn.innerHTML = '<span class="wish-btn-text">Спасибо за поддержку!</span><span class="wish-btn-emoji">💜</span>';
+            
+            if (wishNote) {
+                wishNote.textContent = 'Ты уже поддержал(а) нас! Спасибо! 💜';
+                wishNote.style.display = 'block';
+            }
+        } else {
+            // Если пользователь не голосовал, убеждаемся что кнопка активна
+            if (wishBtn) {
+                wishBtn.disabled = false;
+                wishBtn.classList.remove('clicked');
+            }
+            if (wishNote) {
+                wishNote.style.display = 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка проверки статуса:', error);
+        // При ошибке оставляем кнопку активной
+        const wishBtn = document.getElementById('wishBtn');
+        if (wishBtn) {
+            wishBtn.disabled = false;
         }
     }
 }
