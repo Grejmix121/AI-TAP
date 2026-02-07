@@ -1,0 +1,58 @@
+═══════════════════════════════════════════════════════════════
+  ИСПРАВЛЕНИЕ ОШИБКИ 404 "Could not find table in schema cache"
+═══════════════════════════════════════════════════════════════
+
+❌ ПРОБЛЕМА: Таблицы созданы, но Supabase не видит их в кеше схемы
+   Ошибка: "Could not find the table 'public.startzero_counters' in the schema cache"
+
+✅ РЕШЕНИЕ: Нужно опубликовать таблицы через PostgREST API
+
+═══════════════════════════════════════════════════════════════
+
+📋 ЧТО ДЕЛАТЬ:
+
+1. Откройте Supabase Dashboard → SQL Editor
+
+2. Выполните этот SQL код (скопируйте и вставьте):
+
+-- Публикуем таблицы через PostgREST API
+ALTER PUBLICATION supabase_realtime ADD TABLE public.startzero_counters;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.startzero_user_clicks;
+
+-- Даем права на использование таблиц через API
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+GRANT ALL ON public.startzero_counters TO anon, authenticated;
+GRANT ALL ON public.startzero_user_clicks TO anon, authenticated;
+
+3. Нажмите RUN (Выполнить)
+
+4. Подождите 10-30 секунд (кеш схемы обновляется)
+
+5. Обновите страницу StartZero
+
+6. Ошибки 404 должны исчезнуть! ✅
+
+═══════════════════════════════════════════════════════════════
+
+🔍 АЛЬТЕРНАТИВНЫЙ СПОСОБ (если первый не помог):
+
+1. В Supabase Dashboard перейдите в:
+   Settings → API → Realtime
+   
+2. Убедитесь что включен "Realtime" для вашего проекта
+
+3. Или выполните полный SQL скрипт из файла SQL_ДЛЯ_SUPABASE.sql
+   (он теперь включает публикацию таблиц)
+
+═══════════════════════════════════════════════════════════════
+
+🌐 ДЛЯ NETLIFY:
+
+Если проект на Netlify, убедитесь что:
+
+1. Таблицы опубликованы (выполните SQL выше)
+2. RLS политики настроены правильно
+3. Anon key правильный в коде
+4. После деплоя на Netlify подождите 1-2 минуты
+
+═══════════════════════════════════════════════════════════════

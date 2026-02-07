@@ -1,0 +1,92 @@
+═══════════════════════════════════════════════════════════════
+  ИНСТРУКЦИЯ ПО ПОДКЛЮЧЕНИЮ БАЗЫ ДАННЫХ ДЛЯ STARTZERO
+═══════════════════════════════════════════════════════════════
+
+📋 ЧТО НУЖНО СДЕЛАТЬ:
+
+1. Откройте Supabase Dashboard (https://supabase.com/dashboard)
+   → Выберите ваш проект
+
+2. Перейдите в SQL Editor (SQL редактор)
+
+3. Скопируйте и выполните SQL код из файла create-tables.sql
+   (он находится в папке StartZero)
+   
+   Или выполните этот код напрямую:
+   
+   CREATE TABLE IF NOT EXISTS public.startzero_counters (
+     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+     counter_type TEXT NOT NULL UNIQUE,
+     count INTEGER DEFAULT 0 NOT NULL,
+     updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+   );
+   
+   CREATE TABLE IF NOT EXISTS public.startzero_user_clicks (
+     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+     user_fingerprint TEXT NOT NULL,
+     counter_type TEXT NOT NULL,
+     clicked_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+     UNIQUE(user_fingerprint, counter_type)
+   );
+   
+   ALTER TABLE public.startzero_counters ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE public.startzero_user_clicks ENABLE ROW LEVEL SECURITY;
+   
+   CREATE POLICY "Anyone can read counters" ON public.startzero_counters
+     FOR SELECT USING (true);
+   
+   CREATE POLICY "Anyone can update counters" ON public.startzero_counters
+     FOR UPDATE USING (true);
+   
+   CREATE POLICY "Anyone can insert clicks" ON public.startzero_user_clicks
+     FOR INSERT WITH CHECK (true);
+   
+   CREATE POLICY "Anyone can read clicks" ON public.startzero_user_clicks
+     FOR SELECT USING (true);
+   
+   INSERT INTO public.startzero_counters (counter_type, count) 
+   VALUES 
+     ('wish', 0),
+     ('telegram', 0),
+     ('instagram', 0),
+     ('tiktok', 0)
+   ON CONFLICT (counter_type) DO NOTHING;
+
+4. После выполнения SQL кода откройте страницу StartZero/index.html
+   в браузере и проверьте консоль (F12)
+
+5. В консоли должно появиться:
+   ✅ Supabase клиент инициализирован для StartZero
+   ✅ Счетчик "wish" загружен из Supabase: 0
+   ✅ Счетчик "telegram" загружен из Supabase: 0
+   и т.д.
+
+═══════════════════════════════════════════════════════════════
+
+✅ ЧТО УЖЕ НАСТРОЕНО:
+
+✓ Supabase подключен в index.html
+✓ Код счетчиков готов к работе с базой данных
+✓ Есть fallback на localStorage если база недоступна
+✓ Защита от выделения картинок на всех устройствах
+✓ Глобальная синхронизация счетчиков между устройствами
+
+═══════════════════════════════════════════════════════════════
+
+🔍 ПРОВЕРКА РАБОТЫ:
+
+1. Откройте страницу на компьютере
+2. Нажмите "Ждёмс!" - счетчик увеличится
+3. Откройте страницу на телефоне
+4. Счетчик должен показать то же значение!
+
+═══════════════════════════════════════════════════════════════
+
+⚠️ ЕСЛИ ЧТО-ТО НЕ РАБОТАЕТ:
+
+- Проверьте что SQL код выполнен полностью
+- Проверьте консоль браузера на ошибки
+- Убедитесь что интернет подключен
+- Проверьте что таблицы созданы в Supabase Dashboard → Table Editor
+
+═══════════════════════════════════════════════════════════════
