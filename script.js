@@ -2206,48 +2206,49 @@ async function updateParticipationButtons(threshold, isAvailable) {
         return;
     }
     
-    // Проверяем, достигнут ли лимит выигрышей
-    const isLimitReached = await checkGiveawayLimit(threshold);
+    // Проверяем количество выигрышей и лимит
+    const { hasWinners, isLimitReached, currentWins, limit } = await getGiveawayStatus(threshold);
     
-    if (isLimitReached) {
+    // Удаляем текст о лимите если был
+    const row = document.getElementById(`participation-row-${threshold}`);
+    if (row) {
+        const limitText = row.querySelector('.limit-reached-text');
+        if (limitText) {
+            limitText.remove();
+        }
+    }
+    
+    if (!isAvailable) {
+        // Порог не достигнут - кнопка просто неактивна
+        button.disabled = true;
+        button.classList.remove('participated');
+        button.textContent = 'Участвовать';
+    } else if (isLimitReached && hasWinners) {
+        // Лимит достигнут И были выигрыши - показываем "Розыграно"
         button.disabled = true;
         button.classList.remove('participated');
         button.textContent = 'Розыграно';
         // Добавляем текст рядом с кнопкой
-        const row = document.getElementById(`participation-row-${threshold}`);
         if (row) {
-            let limitText = row.querySelector('.limit-reached-text');
-            if (!limitText) {
-                limitText = document.createElement('div');
-                limitText.className = 'limit-reached-text';
-                limitText.style.cssText = 'font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.5rem; font-style: italic;';
-                limitText.textContent = 'Ожидайте следующего розыгрыша';
-                button.parentElement.appendChild(limitText);
-            }
-        }
-    } else if (isAvailable) {
-        button.disabled = false;
-        button.classList.remove('participated');
-        button.textContent = 'Участвовать';
-        // Удаляем текст о лимите если был
-        const row = document.getElementById(`participation-row-${threshold}`);
-        if (row) {
-            const limitText = row.querySelector('.limit-reached-text');
-            if (limitText) {
-                limitText.remove();
-            }
+            const limitText = document.createElement('div');
+            limitText.className = 'limit-reached-text';
+            limitText.textContent = 'Ожидайте следующего розыгрыша';
+            button.parentElement.appendChild(limitText);
         }
     } else {
-        button.disabled = true;
+        // Порог достигнут, можно участвовать
+        button.disabled = false;
         button.classList.remove('participated');
         button.textContent = 'Участвовать';
     }
 }
 
-// Проверить, достигнут ли лимит выигрышей для порога
-async function checkGiveawayLimit(threshold) {
+// Получить статус розыгрыша для порога
+async function getGiveawayStatus(threshold) {
     const client = getSupabaseClient();
-    if (!client) return true;
+    if (!client) {
+        return { hasWinners: false, isLimitReached: false, currentWins: 0, limit: 0 };
+    }
     
     try {
         // Определяем количество соцсетей, достигших порога
@@ -2256,7 +2257,9 @@ async function checkGiveawayLimit(threshold) {
             .select('counter_type, count')
             .in('counter_type', ['telegram', 'instagram', 'tiktok']);
         
-        if (!counters) return true;
+        if (!counters) {
+            return { hasWinners: false, isLimitReached: false, currentWins: 0, limit: 0 };
+        }
         
         const thresholdValue = THRESHOLDS[threshold];
         let reachedCount = 0;
@@ -2267,12 +2270,16 @@ async function checkGiveawayLimit(threshold) {
             }
         });
         
-        if (reachedCount === 0) return true;
+        if (reachedCount === 0) {
+            return { hasWinners: false, isLimitReached: false, currentWins: 0, limit: 0 };
+        }
         
         const socialCountKey = Math.min(reachedCount, 3).toString();
         const limit = GIVEAWAY_LIMITS[threshold]?.[socialCountKey] || 0;
         
-        if (limit === 0) return true;
+        if (limit === 0) {
+            return { hasWinners: false, isLimitReached: false, currentWins: 0, limit: 0 };
+        }
         
         // Подсчитываем количество выигрышей
         const { count, error } = await client
@@ -2281,15 +2288,25 @@ async function checkGiveawayLimit(threshold) {
             .eq('threshold', threshold);
         
         if (error) {
-            console.error(`❌ Ошибка проверки лимита для ${threshold}:`, error);
-            return false;
+            console.error(`❌ Ошибка проверки статуса для ${threshold}:`, error);
+            return { hasWinners: false, isLimitReached: false, currentWins: 0, limit };
         }
         
-        return (count || 0) >= limit;
+        const currentWins = count || 0;
+        const hasWinners = currentWins > 0;
+        const isLimitReached = currentWins >= limit;
+        
+        return { hasWinners, isLimitReached, currentWins, limit };
     } catch (error) {
-        console.error(`❌ Ошибка проверки лимита для ${threshold}:`, error);
-        return false;
+        console.error(`❌ Ошибка проверки статуса для ${threshold}:`, error);
+        return { hasWinners: false, isLimitReached: false, currentWins: 0, limit: 0 };
     }
+}
+
+// Проверить, достигнут ли лимит выигрышей для порога
+async function checkGiveawayLimit(threshold) {
+    const status = await getGiveawayStatus(threshold);
+    return status.isLimitReached && status.hasWinners;
 }
 
 // Получить историю выигрышей по email
@@ -2427,6 +2444,250 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
+// ==================== ТЕСТОВЫЕ ФУНКЦИИ ====================
+
+// Установить тестовые счетчики соцсетей
+async function setTestCounters(telegram, instagram, tiktok) {
+    const client = getSupabaseClient();
+    if (!client) {
+        showNotification('❌ Supabase клиент не инициализирован', 'error');
+        return;
+    }
+    
+    try {
+        // Обновляем счетчики
+        const updates = [
+            { counter_type: 'telegram', count: telegram },
+            { counter_type: 'instagram', count: instagram },
+            { counter_type: 'tiktok', count: tiktok }
+        ];
+        
+        for (const update of updates) {
+            const { error } = await client
+                .from('startzero_counters')
+                .upsert({
+                    counter_type: update.counter_type,
+                    count: update.count,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'counter_type'
+                });
+            
+            if (error) {
+                console.error(`❌ Ошибка обновления ${update.counter_type}:`, error);
+            }
+        }
+        
+        showNotification(`✅ Счетчики обновлены: Telegram=${telegram.toLocaleString('ru-RU')}, Instagram=${instagram.toLocaleString('ru-RU')}, TikTok=${tiktok.toLocaleString('ru-RU')}`, 'success');
+        
+        // Обновляем таблицу участия
+        await updateParticipationTable();
+        
+        // Перезагружаем счетчики на странице
+        await loadSocialCounts();
+        
+    } catch (error) {
+        console.error('❌ Ошибка установки тестовых счетчиков:', error);
+        showNotification('❌ Ошибка установки тестовых счетчиков', 'error');
+    }
+}
+
+// Сбросить тестовые счетчики (вернуть текущие значения из базы)
+async function resetTestCounters() {
+    const client = getSupabaseClient();
+    if (!client) {
+        showNotification('❌ Supabase клиент не инициализирован', 'error');
+        return;
+    }
+    
+    try {
+        // Загружаем текущие значения из базы
+        const { data: counters } = await client
+            .from('startzero_counters')
+            .select('counter_type, count')
+            .in('counter_type', ['telegram', 'instagram', 'tiktok']);
+        
+        if (counters) {
+            const telegram = counters.find(c => c.counter_type === 'telegram')?.count || 0;
+            const instagram = counters.find(c => c.counter_type === 'instagram')?.count || 0;
+            const tiktok = counters.find(c => c.counter_type === 'tiktok')?.count || 0;
+            
+            showNotification(`ℹ️ Текущие значения: Telegram=${telegram.toLocaleString('ru-RU')}, Instagram=${instagram.toLocaleString('ru-RU')}, TikTok=${tiktok.toLocaleString('ru-RU')}`, 'info');
+        } else {
+            showNotification('ℹ️ Счетчики не найдены в базе', 'info');
+        }
+        
+        // Обновляем таблицу участия
+        await updateParticipationTable();
+        
+        // Перезагружаем счетчики на странице
+        await loadSocialCounts();
+        
+    } catch (error) {
+        console.error('❌ Ошибка сброса счетчиков:', error);
+        showNotification('❌ Ошибка сброса счетчиков', 'error');
+    }
+}
+
+// Очистить все выигрыши (для тестирования)
+async function clearGiveawayWinners() {
+    if (!confirm('⚠️ Вы уверены, что хотите очистить все выигрыши? Это действие нельзя отменить!')) {
+        return;
+    }
+    
+    const client = getSupabaseClient();
+    if (!client) {
+        showNotification('❌ Supabase клиент не инициализирован', 'error');
+        return;
+    }
+    
+    try {
+        const { error } = await client
+            .from('startzero_giveaway_winners')
+            .delete()
+            .neq('id', '00000000-0000-0000-0000-000000000000'); // Удаляем все записи
+        
+        if (error) {
+            console.error('❌ Ошибка очистки выигрышей:', error);
+            showNotification('❌ Ошибка очистки выигрышей', 'error');
+            return;
+        }
+        
+        showNotification('✅ Все выигрыши очищены', 'success');
+        
+        // Обновляем таблицу участия
+        await updateParticipationTable();
+        
+    } catch (error) {
+        console.error('❌ Ошибка очистки выигрышей:', error);
+        showNotification('❌ Ошибка очистки выигрышей', 'error');
+    }
+}
+
+// Показать статистику розыгрышей
+async function showGiveawayStats() {
+    const client = getSupabaseClient();
+    if (!client) {
+        showNotification('❌ Supabase клиент не инициализирован', 'error');
+        return;
+    }
+    
+    try {
+        // Получаем статистику по порогам
+        const { data: winners, error } = await client
+            .from('startzero_giveaway_winners')
+            .select('threshold, prize_level, email, won_at')
+            .order('won_at', { ascending: false });
+        
+        if (error) {
+            console.error('❌ Ошибка получения статистики:', error);
+            showNotification('❌ Ошибка получения статистики', 'error');
+            return;
+        }
+        
+        // Подсчитываем статистику
+        const stats = {
+            '100k': { total: 0, byPrize: {} },
+            '200k': { total: 0, byPrize: {} },
+            '300k': { total: 0, byPrize: {} }
+        };
+        
+        if (winners) {
+            winners.forEach(winner => {
+                const threshold = winner.threshold;
+                const prizeLevel = winner.prize_level;
+                
+                if (stats[threshold]) {
+                    stats[threshold].total++;
+                    stats[threshold].byPrize[prizeLevel] = (stats[threshold].byPrize[prizeLevel] || 0) + 1;
+                }
+            });
+        }
+        
+        // Получаем лимиты
+        const { data: counters } = await client
+            .from('startzero_counters')
+            .select('counter_type, count')
+            .in('counter_type', ['telegram', 'instagram', 'tiktok']);
+        
+        let reached100k = 0, reached200k = 0, reached300k = 0;
+        if (counters) {
+            counters.forEach(counter => {
+                const count = parseFloat(counter.count) || 0;
+                if (count >= 300000) reached300k++;
+                if (count >= 200000) reached200k++;
+                if (count >= 100000) reached100k++;
+            });
+        }
+        
+        const socialCount100k = Math.min(reached100k, 3);
+        const socialCount200k = Math.min(reached200k, 3);
+        const socialCount300k = Math.min(reached300k, 3);
+        
+        const limit100k = GIVEAWAY_LIMITS['100k'][socialCount100k.toString()] || 0;
+        const limit200k = GIVEAWAY_LIMITS['200k'][socialCount200k.toString()] || 0;
+        const limit300k = GIVEAWAY_LIMITS['300k'][socialCount300k.toString()] || 0;
+        
+        // Формируем текст статистики
+        const statsText = `
+📊 Статистика розыгрышей:
+
+🎯 Порог 100к:
+   Выиграно: ${stats['100k'].total} / ${limit100k.toLocaleString('ru-RU')}
+   Соцсетей достигло: ${reached100k}
+   По призам:
+     - 100k: ${stats['100k'].byPrize['100k'] || 0}
+     - 200k: ${stats['100k'].byPrize['200k'] || 0}
+     - 300k: ${stats['100k'].byPrize['300k'] || 0}
+     - bonus: ${stats['100k'].byPrize['bonus'] || 0}
+
+🎯 Порог 200к:
+   Выиграно: ${stats['200k'].total} / ${limit200k.toLocaleString('ru-RU')}
+   Соцсетей достигло: ${reached200k}
+   По призам:
+     - 100k: ${stats['200k'].byPrize['100k'] || 0}
+     - 200k: ${stats['200k'].byPrize['200k'] || 0}
+     - 300k: ${stats['200k'].byPrize['300k'] || 0}
+     - bonus: ${stats['200k'].byPrize['bonus'] || 0}
+
+🎯 Порог 300к:
+   Выиграно: ${stats['300k'].total} / ${limit300k.toLocaleString('ru-RU')}
+   Соцсетей достигло: ${reached300k}
+   По призам:
+     - 100k: ${stats['300k'].byPrize['100k'] || 0}
+     - 200k: ${stats['300k'].byPrize['200k'] || 0}
+     - 300k: ${stats['300k'].byPrize['300k'] || 0}
+     - bonus: ${stats['300k'].byPrize['bonus'] || 0}
+
+📧 Всего уникальных email с выигрышами: ${new Set(winners?.map(w => w.email) || []).size}
+        `.trim();
+        
+        // Показываем статистику
+        const statsDiv = document.getElementById('testStats');
+        const statsContent = document.getElementById('testStatsContent');
+        
+        if (statsDiv && statsContent) {
+            statsContent.textContent = statsText;
+            statsDiv.style.display = 'block';
+            
+            // Автоматически скрываем через 10 секунд
+            setTimeout(() => {
+                statsDiv.style.display = 'none';
+            }, 10000);
+        }
+        
+    } catch (error) {
+        console.error('❌ Ошибка получения статистики:', error);
+        showNotification('❌ Ошибка получения статистики', 'error');
+    }
+}
+
+// Экспортируем тестовые функции
+window.setTestCounters = setTestCounters;
+window.resetTestCounters = resetTestCounters;
+window.clearGiveawayWinners = clearGiveawayWinners;
+window.showGiveawayStats = showGiveawayStats;
+
 // Обработать отправку формы участия
 async function handleGiveawaySubmit(event) {
     event.preventDefault();
@@ -2535,8 +2796,8 @@ async function conductGiveaway(threshold, email) {
                 return { won: false, error: 'Ошибка сохранения выигрыша' };
             }
             
-            // TODO: Здесь нужно будет привязать VIP к email через API или другую систему
-            // Пока просто возвращаем успех
+            // Выигрыш зарегистрирован в базе данных
+            // Администратор выдаст награду вручную на основе данных в базе
             
             return {
                 won: true,
@@ -2568,7 +2829,7 @@ function showGiveawayResult(result, email) {
         resultContent.innerHTML = `
             <div class="giveaway-result-icon">🎉</div>
             <h2 class="giveaway-result-title win">Поздравляем! Вы выиграли!</h2>
-            <p class="giveaway-result-message">Ваш приз будет привязан к указанному email</p>
+            <p class="giveaway-result-message">Ваш выигрыш зарегистрирован в системе. Администратор свяжется с вами для выдачи приза.</p>
             <div class="giveaway-result-prize">
                 <div class="giveaway-result-prize-title">Ваш приз:</div>
                 <ul class="giveaway-result-prize-list">
@@ -2576,6 +2837,9 @@ function showGiveawayResult(result, email) {
                 </ul>
             </div>
             <div class="giveaway-result-email">Email: ${email}</div>
+            <p class="giveaway-result-note" style="font-size: 0.85rem; color: rgba(255, 255, 255, 0.7); margin-top: 1rem; font-style: italic;">
+                💡 Приз будет выдан администратором в течение нескольких дней после розыгрыша
+            </p>
             <button class="giveaway-result-button" onclick="closeGiveawayModal()">Закрыть</button>
         `;
     } else {
@@ -2635,9 +2899,9 @@ async function handleParticipate(threshold) {
         return;
     }
     
-    // Проверяем лимит
-    const isLimitReached = await checkGiveawayLimit(threshold);
-    if (isLimitReached) {
+    // Проверяем статус розыгрыша
+    const status = await getGiveawayStatus(threshold);
+    if (status.isLimitReached && status.hasWinners) {
         showNotification('⚠️ Розыгрыш завершен. Ожидайте следующего!', 'warning');
         return;
     }

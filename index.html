@@ -228,10 +228,19 @@
                 
                 <div class="giveaway-info-text">
                     <p class="giveaway-info-paragraph">🎯 <strong>Как это работает:</strong></p>
-                    <p class="giveaway-info-paragraph">Мы отслеживаем количество подписчиков в каждой из наших соцсетей. Когда достигается определенный порог подписчиков (100к, 200к, 300к), мы разыгрываем соответствующее количество VIP подписок на услугу "Просмотр вместе".</p>
+                    <p class="giveaway-info-paragraph">Мы отслеживаем количество подписчиков в каждой из наших соцсетей (Telegram, Instagram, TikTok). Когда достигается определенный порог подписчиков (100к, 200к, 300к), становится доступным участие в розыгрыше VIP подписок.</p>
+                    <p class="giveaway-info-paragraph">Для участия нажмите кнопку "Участвовать" на нужном пороге, введите ваш email и нажмите "Изучить технику удача". Система проведет розыгрыш и покажет результат. При выигрыше приз будет привязан к указанному email.</p>
                     
                     <p class="giveaway-info-paragraph">📈 <strong>Система призов:</strong></p>
-                    <p class="giveaway-info-paragraph">Призы удваиваются каждые 100к подписчиков! Чем больше соцсетей достигают порога одновременно, тем больше общий призовой фонд.</p>
+                    <p class="giveaway-info-paragraph"><strong>Базовые призы (первое участие):</strong></p>
+                    <ul class="giveaway-prize-list">
+                        <li><strong>100к:</strong> 1 VIP "Просмотр вместе"</li>
+                        <li><strong>200к:</strong> "Просмотр вместе" + 1 неделя VIP</li>
+                        <li><strong>300к:</strong> +1 неделя VIP "Просмотр вместе" + VIP "ИИ Минко" на 1 неделю</li>
+                    </ul>
+                    <p class="giveaway-info-paragraph"><strong>Повторные участия:</strong></p>
+                    <p class="giveaway-info-paragraph">Приз зависит от вашей истории выигрышей на указанном email. Если вы не выиграли на предыдущих уровнях, приз будет соответствовать более низкому уровню. Если выиграли все 3 уровня, следующие розыгрыши дают бонусные призы: +1 неделя VIP "Просмотр вместе" + +1 неделя VIP "ИИ Минко".</p>
+                    <p class="giveaway-info-paragraph">Чем больше соцсетей достигают порога одновременно, тем больше общий призовой фонд (см. таблицы выше).</p>
                 </div>
                 
                 <div class="giveaway-tables-grid">
@@ -374,6 +383,26 @@
                 </div>
                 
                 <p class="giveaway-note">💡 Подписывайтесь на все наши соцсети и участвуйте в розыгрыше! Чем больше подписчиков, тем больше призов!</p>
+            </div>
+            
+            <!-- Тестовая панель для проверки системы участия -->
+            <div class="test-panel" id="testPanel" style="margin-top: 2rem; padding: 1.5rem; background: rgba(255, 193, 7, 0.1); border: 2px solid rgba(255, 193, 7, 0.3); border-radius: 12px;">
+                <h3 style="color: #ffc107; margin-bottom: 1rem; text-align: center;">🧪 Тестовая панель</h3>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 1rem;">
+                    <button class="test-btn" onclick="setTestCounters(100000, 100000, 100000)">100к все соцсети</button>
+                    <button class="test-btn" onclick="setTestCounters(200000, 200000, 200000)">200к все соцсети</button>
+                    <button class="test-btn" onclick="setTestCounters(300000, 300000, 300000)">300к все соцсети</button>
+                    <button class="test-btn" onclick="setTestCounters(100000, 0, 0)">100к только Telegram</button>
+                    <button class="test-btn" onclick="setTestCounters(200000, 200000, 0)">200к Telegram + Instagram</button>
+                    <button class="test-btn" onclick="resetTestCounters()">Сбросить (текущие значения)</button>
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 1rem;">
+                    <button class="test-btn" onclick="clearGiveawayWinners()" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4);">Очистить выигрыши</button>
+                    <button class="test-btn" onclick="showGiveawayStats()" style="background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4);">Статистика розыгрышей</button>
+                </div>
+                <div id="testStats" style="margin-top: 1rem; padding: 1rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; display: none;">
+                    <pre id="testStatsContent" style="color: rgba(255, 255, 255, 0.9); font-size: 0.85rem; margin: 0; white-space: pre-wrap;"></pre>
+                </div>
             </div>
         </div>
     </div>
