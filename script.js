@@ -856,17 +856,65 @@ document.addEventListener('DOMContentLoaded', async () => {
     // чтобы убедиться что загружены актуальные данные
     setTimeout(async () => {
         console.log('🔄 Повторная проверка Telegram счетчика...');
-        const telegramCount = await getTelegramSubscribers();
-        const telegramCountElement = document.getElementById('telegramCount');
-        if (telegramCountElement) {
-            const currentText = telegramCountElement.textContent.replace(/\./g, '').replace(/,/g, '');
-            const currentCount = parseInt(currentText) || 0;
-            if (telegramCount !== currentCount) {
-                console.log(`🔄 Обновление Telegram: ${currentCount} → ${telegramCount}`);
-                animateNumber(telegramCountElement, currentCount, telegramCount, 500);
-            } else {
-                console.log(`✅ Telegram счетчик актуален: ${telegramCount}`);
+        const client = getSupabaseClient();
+        if (!client) return;
+        
+        try {
+            const { data, error } = await client
+                .from('startzero_counters')
+                .select('count, updated_at')
+                .eq('counter_type', 'telegram')
+                .maybeSingle();
+            
+            const telegramCountElement = document.getElementById('telegramCount');
+            if (!telegramCountElement) return;
+            
+            if (error || !data) {
+                // Данных нет - показываем "подсчет..."
+                telegramCountElement.textContent = 'подсчет...';
+                telegramCountElement.style.opacity = '0.7';
+                telegramCountElement.style.fontSize = '1.2rem';
+                telegramCountElement.style.fontStyle = 'italic';
+                telegramCountElement.classList.add('counting');
+                return;
             }
+            
+            const telegramCount = parseFloat(data.count) || 0;
+            const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+            const now = new Date();
+            const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+            
+            if (!isDataFresh) {
+                // Данные устарели - показываем "подсчет..."
+                console.log(`⏳ Данные Telegram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                telegramCountElement.textContent = 'подсчет...';
+                telegramCountElement.style.opacity = '0.7';
+                telegramCountElement.style.fontSize = '1.2rem';
+                telegramCountElement.style.fontStyle = 'italic';
+                telegramCountElement.classList.add('counting');
+                return;
+            }
+            
+            // Данные свежие - обновляем если нужно
+            const currentText = telegramCountElement.textContent.trim();
+            if (currentText === 'подсчет...' && telegramCount > 0) {
+                telegramCountElement.style.opacity = '1';
+                telegramCountElement.style.fontSize = '1.8rem';
+                telegramCountElement.style.fontStyle = 'normal';
+                telegramCountElement.classList.remove('counting');
+                animateNumber(telegramCountElement, 0, telegramCount, 500);
+                console.log(`✅ Telegram счетчик обновлен: ${telegramCount.toLocaleString('ru-RU')} подписчиков`);
+            } else if (currentText !== 'подсчет...' && telegramCount > 0) {
+                const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
+                if (Math.abs(currentCount - telegramCount) > 0) {
+                    console.log(`🔄 Обновление Telegram: ${currentCount} → ${telegramCount}`);
+                    animateNumber(telegramCountElement, currentCount, telegramCount, 500);
+                } else {
+                    console.log(`✅ Telegram счетчик актуален: ${telegramCount}`);
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка повторной проверки Telegram счетчика:', error);
         }
     }, 2000);
 });
@@ -1128,8 +1176,39 @@ function showWishNotification() {
 async function getTelegramSubscribers() {
     // Просто читаем данные из Supabase, которые обновляет бот
     // Бот работает на сервере и обновляет значение каждые 5 минут
-    const count = await loadCounterFromSupabase('telegram');
-    return count;
+    const client = getSupabaseClient();
+    if (!client) {
+        return 0;
+    }
+    
+    try {
+        const { data, error } = await client
+            .from('startzero_counters')
+            .select('count, updated_at')
+            .eq('counter_type', 'telegram')
+            .maybeSingle();
+        
+        if (error || !data) {
+            return 0;
+        }
+        
+        const count = parseFloat(data.count) || 0;
+        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+        const now = new Date();
+        
+        // Проверяем свежесть данных (бот обновляет каждые 5 минут)
+        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+        
+        if (!isDataFresh) {
+            // Данные устарели
+            return 0;
+        }
+        
+        return count;
+    } catch (error) {
+        console.error('Ошибка получения Telegram подписчиков:', error);
+        return 0;
+    }
 }
 
 // Загрузить счетчики соцсетей
@@ -1140,7 +1219,7 @@ async function loadSocialCounts() {
     
     const telegramCountElement = document.getElementById('telegramCount');
     
-    // Показываем "подсчет..." пока данные не загружены
+    // ВСЕГДА сначала показываем "подсчет..." пока данные не загружены
     if (telegramCountElement) {
         telegramCountElement.textContent = 'подсчет...';
         telegramCountElement.style.opacity = '0.7';
@@ -1149,22 +1228,73 @@ async function loadSocialCounts() {
         telegramCountElement.classList.add('counting');
     }
     
-    // Принудительно получаем свежие данные из Supabase
-    const telegramCount = await getTelegramSubscribers();
+    // Принудительно получаем свежие данные из Supabase с информацией о времени обновления
+    const client = getSupabaseClient();
+    if (!client) {
+        console.error('❌ Supabase клиент не инициализирован');
+        return;
+    }
     
-    if (telegramCountElement) {
-        if (telegramCount > 0) {
-            // Данные получены - показываем реальное количество
-            console.log(`📊 Получено из Supabase: ${telegramCount.toLocaleString('ru-RU')} подписчиков`);
-            telegramCountElement.style.opacity = '1';
-            telegramCountElement.style.fontSize = '1.8rem';
-            telegramCountElement.style.fontStyle = 'normal';
-            telegramCountElement.classList.remove('counting');
-            animateNumber(telegramCountElement, 0, telegramCount, 800);
-            console.log(`✅ Telegram счетчик обновлен на странице: ${telegramCount.toLocaleString('ru-RU')}`);
-        } else {
-            // Данные еще не получены - оставляем "подсчет..."
-            console.log('⏳ Данные Telegram еще не загружены, показываем "подсчет..."');
+    try {
+        const { data, error } = await client
+            .from('startzero_counters')
+            .select('count, updated_at')
+            .eq('counter_type', 'telegram')
+            .maybeSingle();
+        
+        if (error) {
+            console.error('❌ Ошибка загрузки Telegram счетчика:', error);
+            return;
+        }
+        
+        if (!data) {
+            // Данных нет в базе - показываем "подсчет..."
+            console.log('⏳ Telegram счетчик не найден в базе, показываем "подсчет..."');
+            if (telegramCountElement) {
+                telegramCountElement.textContent = 'подсчет...';
+                telegramCountElement.style.opacity = '0.7';
+                telegramCountElement.style.fontSize = '1.2rem';
+                telegramCountElement.style.fontStyle = 'italic';
+                telegramCountElement.classList.add('counting');
+            }
+            return;
+        }
+        
+        const telegramCount = parseFloat(data.count) || 0;
+        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+        const now = new Date();
+        
+        // Проверяем, насколько свежие данные (бот обновляет каждые 5 минут)
+        // Если данные старше 10 минут - считаем их устаревшими и показываем "подсчет..."
+        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+        
+        if (telegramCountElement) {
+            if (telegramCount > 0 && isDataFresh) {
+                // Данные свежие - показываем реальное количество
+                console.log(`📊 Получено из Supabase: ${telegramCount.toLocaleString('ru-RU')} подписчиков (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'})`);
+                telegramCountElement.style.opacity = '1';
+                telegramCountElement.style.fontSize = '1.8rem';
+                telegramCountElement.style.fontStyle = 'normal';
+                telegramCountElement.classList.remove('counting');
+                animateNumber(telegramCountElement, 0, telegramCount, 800);
+                console.log(`✅ Telegram счетчик обновлен на странице: ${telegramCount.toLocaleString('ru-RU')}`);
+            } else {
+                // Данные устарели или их нет - показываем "подсчет..."
+                if (!isDataFresh) {
+                    console.log(`⏳ Данные Telegram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                } else {
+                    console.log('⏳ Данные Telegram еще не загружены, показываем "подсчет..."');
+                }
+                telegramCountElement.textContent = 'подсчет...';
+                telegramCountElement.style.opacity = '0.7';
+                telegramCountElement.style.fontSize = '1.2rem';
+                telegramCountElement.style.fontStyle = 'italic';
+                telegramCountElement.classList.add('counting');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Ошибка при загрузке Telegram счетчика:', error);
+        if (telegramCountElement) {
             telegramCountElement.textContent = 'подсчет...';
             telegramCountElement.style.opacity = '0.7';
             telegramCountElement.style.fontSize = '1.2rem';
@@ -1186,13 +1316,55 @@ async function loadSocialCounts() {
     // Обновляем счетчик Telegram каждую минуту (бот обновляет в Supabase каждые 5 минут)
     // Это нужно чтобы показывать актуальные данные, которые бот уже сохранил
     setInterval(async () => {
-        const newTelegramCount = await getTelegramSubscribers();
         const telegramCountElement = document.getElementById('telegramCount');
-        if (telegramCountElement) {
+        if (!telegramCountElement) return;
+        
+        const client = getSupabaseClient();
+        if (!client) return;
+        
+        try {
+            const { data, error } = await client
+                .from('startzero_counters')
+                .select('count, updated_at')
+                .eq('counter_type', 'telegram')
+                .maybeSingle();
+            
+            if (error || !data) {
+                // Данных нет - показываем "подсчет..."
+                const currentText = telegramCountElement.textContent.trim();
+                if (currentText !== 'подсчет...') {
+                    telegramCountElement.textContent = 'подсчет...';
+                    telegramCountElement.style.opacity = '0.7';
+                    telegramCountElement.style.fontSize = '1.2rem';
+                    telegramCountElement.style.fontStyle = 'italic';
+                    telegramCountElement.classList.add('counting');
+                }
+                return;
+            }
+            
+            const newTelegramCount = parseFloat(data.count) || 0;
+            const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+            const now = new Date();
+            const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+            
             const currentText = telegramCountElement.textContent.trim();
             
-            // Если показывается "подсчет..." и данные получены - обновляем
+            if (!isDataFresh) {
+                // Данные устарели - показываем "подсчет..."
+                if (currentText !== 'подсчет...') {
+                    console.log(`⏳ Данные Telegram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                    telegramCountElement.textContent = 'подсчет...';
+                    telegramCountElement.style.opacity = '0.7';
+                    telegramCountElement.style.fontSize = '1.2rem';
+                    telegramCountElement.style.fontStyle = 'italic';
+                    telegramCountElement.classList.add('counting');
+                }
+                return;
+            }
+            
+            // Данные свежие
             if (currentText === 'подсчет...' && newTelegramCount > 0) {
+                // Если показывается "подсчет..." и данные получены - обновляем
                 telegramCountElement.style.opacity = '1';
                 telegramCountElement.style.fontSize = '1.8rem';
                 telegramCountElement.style.fontStyle = 'normal';
@@ -1202,20 +1374,24 @@ async function loadSocialCounts() {
             } 
             // Если данные есть и значение изменилось - обновляем
             else if (currentText !== 'подсчет...' && newTelegramCount > 0) {
-                const currentCount = parseInt(currentText.replace(/\./g, '').replace(/,/g, '')) || 0;
-                if (newTelegramCount !== currentCount) {
+                const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
+                if (Math.abs(currentCount - newTelegramCount) > 0) {
                     console.log(`🔄 Обновление Telegram счетчика: ${currentCount} → ${newTelegramCount}`);
                     animateNumber(telegramCountElement, currentCount, newTelegramCount, 500);
                 }
             }
             // Если данных еще нет - показываем "подсчет..."
             else if (newTelegramCount === 0) {
-                telegramCountElement.textContent = 'подсчет...';
-                telegramCountElement.style.opacity = '0.7';
-                telegramCountElement.style.fontSize = '1.2rem';
-                telegramCountElement.style.fontStyle = 'italic';
-                telegramCountElement.classList.add('counting');
+                if (currentText !== 'подсчет...') {
+                    telegramCountElement.textContent = 'подсчет...';
+                    telegramCountElement.style.opacity = '0.7';
+                    telegramCountElement.style.fontSize = '1.2rem';
+                    telegramCountElement.style.fontStyle = 'italic';
+                    telegramCountElement.classList.add('counting');
+                }
             }
+        } catch (error) {
+            console.error('Ошибка обновления Telegram счетчика:', error);
         }
     }, 60 * 1000); // Обновляем каждую минуту
 }
@@ -1289,13 +1465,49 @@ async function handleSocialClick(event, socialName) {
         }
         
         // Переходим на правильную ссылку через 3 секунды
+        // Используем несколько методов для совместимости со всеми браузерами (включая Telegram, Instagram, TikTok встроенные браузеры)
         setTimeout(() => {
             if (url && url !== '#') {
-                // Открываем ссылку в новой вкладке
-                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-                if (!newWindow) {
-                    // Если всплывающее окно заблокировано, открываем в той же вкладке
-                    window.location.href = url;
+                // Определяем, находимся ли мы во встроенном браузере
+                const isInAppBrowser = /Telegram|Instagram|TikTok|Line|Kakao|WeChat|FBAN|FBAV/i.test(navigator.userAgent);
+                
+                try {
+                    if (isInAppBrowser) {
+                        // Для встроенных браузеров используем прямой переход
+                        console.log(`🔗 Встроенный браузер обнаружен, используем прямой переход: ${url}`);
+                        window.location.href = url;
+                    } else {
+                        // Для обычных браузеров пробуем открыть в новой вкладке
+                        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                        
+                        // Проверяем, открылось ли окно
+                        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+                            // Если не получилось, используем прямой переход
+                            console.log(`🔗 Не удалось открыть в новой вкладке, используем прямой переход: ${url}`);
+                            window.location.href = url;
+                        } else {
+                            console.log(`🔗 Ссылка открыта в новой вкладке: ${url}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Ошибка открытия ссылки:', error);
+                    // Последняя попытка - прямой переход
+                    try {
+                        window.location.href = url;
+                    } catch (e) {
+                        console.error('Критическая ошибка открытия ссылки:', e);
+                        // Создаем временную ссылку как последний резерв
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        link.style.display = 'none';
+                        document.body.appendChild(link);
+                        link.click();
+                        setTimeout(() => {
+                            document.body.removeChild(link);
+                        }, 100);
+                    }
                 }
             }
             // Скрываем загрузочный экран через небольшую задержку

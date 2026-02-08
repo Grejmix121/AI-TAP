@@ -520,7 +520,7 @@ body::-webkit-scrollbar-thumb:hover {
 /* Секция розыгрыша */
 .giveaway-section {
     margin-top: 3rem;
-    padding: 2rem;
+    padding: 1.5rem;
     background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
     border-radius: 16px;
     border: 2px solid rgba(168, 85, 247, 0.3);
@@ -528,76 +528,77 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .giveaway-title {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--primary-color);
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
     text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
 }
 
 .giveaway-description {
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: rgba(255, 255, 255, 0.9);
     text-align: center;
-    margin-bottom: 2rem;
-    line-height: 1.6;
-}
-
-.giveaway-rules {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
     margin-bottom: 1.5rem;
-}
-
-.giveaway-rule {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid rgba(168, 85, 247, 0.2);
-}
-
-.rule-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-    text-align: center;
-}
-
-.rule-list {
-    list-style: none;
-    padding: 0;
-}
-
-.rule-list li {
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 0.75rem;
-    padding-left: 1.5rem;
-    position: relative;
     line-height: 1.5;
 }
 
-.rule-list li::before {
-    content: '🎁';
-    position: absolute;
-    left: 0;
-    font-size: 1rem;
+.giveaway-table-container {
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    -webkit-overflow-scrolling: touch;
 }
 
-.rule-list li strong {
+.giveaway-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    font-size: 0.9rem;
+}
+
+.giveaway-table thead {
+    background: rgba(168, 85, 247, 0.2);
+}
+
+.giveaway-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-bottom: 2px solid rgba(168, 85, 247, 0.3);
+}
+
+.giveaway-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.giveaway-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.giveaway-table tbody tr:hover {
+    background: rgba(168, 85, 247, 0.1);
+    transition: background 0.2s ease;
+}
+
+.giveaway-table td strong {
     color: var(--primary-color);
     font-weight: 600;
 }
 
 .giveaway-note {
-    font-size: 0.95rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
     text-align: center;
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
     border-top: 1px solid rgba(168, 85, 247, 0.2);
     font-style: italic;
 }
@@ -1164,16 +1165,31 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 1.2rem;
     }
     
-    .giveaway-rules {
-        grid-template-columns: 1fr;
+    .giveaway-title {
+        font-size: 1.2rem;
     }
     
-    .giveaway-title {
-        font-size: 1.3rem;
+    .giveaway-description {
+        font-size: 0.85rem;
     }
     
     .giveaway-section {
-        padding: 1.5rem;
+        padding: 1.25rem;
+    }
+    
+    .giveaway-table {
+        font-size: 0.8rem;
+    }
+    
+    .giveaway-table th,
+    .giveaway-table td {
+        padding: 0.6rem 0.4rem;
+    }
+    
+    .giveaway-note {
+        font-size: 0.8rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
     }
 
     .info-title {
@@ -1324,19 +1340,26 @@ body::-webkit-scrollbar-thumb:hover {
     }
     
     .giveaway-description {
-        font-size: 0.9rem;
-    }
-    
-    .rule-title {
-        font-size: 1rem;
-    }
-    
-    .rule-list li {
         font-size: 0.85rem;
+    }
+    
+    .giveaway-table {
+        font-size: 0.75rem;
+    }
+    
+    .giveaway-table th,
+    .giveaway-table td {
+        padding: 0.5rem 0.3rem;
+    }
+    
+    .giveaway-table th {
+        font-size: 0.7rem;
     }
     
     .giveaway-note {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
     }
 }
 
