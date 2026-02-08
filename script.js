@@ -68,29 +68,49 @@ function getSupabaseClient() {
 async function loadCounterFromSupabase(counterType) {
     const client = getSupabaseClient();
     if (!client) {
-        // Fallback на localStorage если Supabase недоступен
+        // Fallback на localStorage если Supabase недоступен (кроме Telegram)
+        if (counterType === 'telegram') {
+            return 0; // Для Telegram не используем localStorage
+        }
         const localKey = counterType === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + counterType;
         return parseFloat(localStorage.getItem(localKey) || '0');
     }
     
     try {
+        // Для Telegram всегда получаем свежие данные из Supabase (без кеша)
+        // Используем order и limit чтобы получить последнее обновленное значение
         const { data, error } = await client
             .from('startzero_counters')
-            .select('count')
+            .select('count, updated_at')
             .eq('counter_type', counterType)
+            .order('updated_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
         
         if (error || !data) {
-            // Fallback на localStorage
+            console.warn(`Счетчик ${counterType} не найден в Supabase`);
+            // Для Telegram не используем localStorage fallback
+            if (counterType === 'telegram') {
+                return 0;
+            }
             const localKey = counterType === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + counterType;
             return parseFloat(localStorage.getItem(localKey) || '0');
         }
         
         const count = data?.count || 0;
+        
+        // Для Telegram логируем информацию для отладки
+        if (counterType === 'telegram') {
+            console.log(`📊 Telegram: ${count.toLocaleString('ru-RU')} подписчиков (обновлено: ${data.updated_at ? new Date(data.updated_at).toLocaleString('ru-RU') : 'N/A'})`);
+        }
+        
         return count;
     } catch (error) {
-        console.error('Ошибка загрузки счетчика:', error);
-        // Fallback на localStorage
+        console.error(`Ошибка загрузки счетчика ${counterType}:`, error);
+        // Для Telegram не используем localStorage fallback
+        if (counterType === 'telegram') {
+            return 0;
+        }
         const localKey = counterType === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + counterType;
         return parseFloat(localStorage.getItem(localKey) || '0');
     }
@@ -1051,25 +1071,25 @@ function showWishNotification() {
 }
 
 // Получить реальное количество подписчиков Telegram канала
-// Функция загружается из отдельного файла Bot/telegram-bot.js
+// Бот обновляет данные в Supabase, сайт просто читает их оттуда
 async function getTelegramSubscribers() {
-    // Проверяем, загружен ли модуль Telegram бота
-    if (typeof window.getTelegramSubscribersFromBot !== 'undefined') {
-        return await window.getTelegramSubscribersFromBot(getSupabaseClient, loadCounterFromSupabase);
-    }
-    
-    // Fallback: если модуль не загружен, используем данные из Supabase
-    console.warn('Telegram Bot модуль не загружен. Используются данные из Supabase.');
-    return await loadCounterFromSupabase('telegram');
+    // Просто читаем данные из Supabase, которые обновляет бот
+    // Бот работает на сервере и обновляет значение каждые 5 минут
+    const count = await loadCounterFromSupabase('telegram');
+    return count;
 }
 
 // Загрузить счетчики соцсетей
 async function loadSocialCounts() {
-    // Для Telegram получаем реальное количество подписчиков
+    // Для Telegram получаем реальное количество подписчиков из Supabase
+    // (бот обновляет это значение каждые 5 минут)
+    console.log('🔄 Загрузка счетчика Telegram из Supabase...');
     const telegramCount = await getTelegramSubscribers();
     const telegramCountElement = document.getElementById('telegramCount');
     if (telegramCountElement) {
+        // Всегда обновляем значение, даже если оно 0 (чтобы показать актуальные данные)
         animateNumber(telegramCountElement, 0, telegramCount, 800);
+        console.log(`✅ Telegram счетчик обновлен на странице: ${telegramCount.toLocaleString('ru-RU')}`);
     }
     
     // Для остальных соцсетей пока используем счетчики из Supabase
@@ -1082,17 +1102,23 @@ async function loadSocialCounts() {
         }
     }
     
-    // Обновляем счетчик Telegram каждые 5 минут
+    // Обновляем счетчик Telegram каждую минуту (бот обновляет в Supabase каждые 5 минут)
+    // Это нужно чтобы показывать актуальные данные, которые бот уже сохранил
     setInterval(async () => {
         const newTelegramCount = await getTelegramSubscribers();
         const telegramCountElement = document.getElementById('telegramCount');
         if (telegramCountElement) {
-            const currentCount = parseInt(telegramCountElement.textContent.replace(/\./g, '')) || 0;
+            // Получаем текущее значение из элемента (уже отформатированное)
+            const currentText = telegramCountElement.textContent.replace(/\./g, '').replace(/,/g, '');
+            const currentCount = parseInt(currentText) || 0;
+            
+            // Обновляем только если значение изменилось
             if (newTelegramCount !== currentCount) {
+                console.log(`🔄 Обновление Telegram счетчика: ${currentCount} → ${newTelegramCount}`);
                 animateNumber(telegramCountElement, currentCount, newTelegramCount, 500);
             }
         }
-    }, 5 * 60 * 1000); // 5 минут
+    }, 60 * 1000); // Обновляем каждую минуту
 }
 
 // Правильные URL для соцсетей (всегда используем эти значения)
