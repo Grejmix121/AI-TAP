@@ -223,182 +223,155 @@
 
             <!-- Информация о розыгрыше -->
             <div class="giveaway-section">
-                <h2 class="giveaway-title">🎁 Розыгрыш VIP подписки "Просмотр вместе"</h2>
-                <p class="giveaway-description">Чем больше подписчиков в наших соцсетях, тем больше призов мы разыграем! Подписывайтесь на Telegram, Instagram и TikTok, чтобы увеличить шансы на победу!</p>
+                <h2 class="giveaway-title">🎁 Розыгрыш VIP подписок</h2>
+                <p class="giveaway-description">Когда наши соцсети достигнут 100к подписчиков — запускаются розыгрыши VIP подписок! У каждой соцсети свой розыгрыш, плюс общий суммарный розыгрыш.</p>
                 
                 <div class="giveaway-info-text">
                     <p class="giveaway-info-paragraph">🎯 <strong>Как это работает:</strong></p>
-                    <p class="giveaway-info-paragraph">Мы отслеживаем количество подписчиков в каждой из наших соцсетей (Telegram, Instagram, TikTok). Когда достигается определенный порог подписчиков (100к, 200к, 300к), становится доступным участие в розыгрыше VIP подписок.</p>
-                    <p class="giveaway-info-paragraph">Для участия нажмите кнопку "Участвовать" на нужном пороге, введите ваш email и нажмите "Изучить технику удача". Система проведет розыгрыш и покажет результат. При выигрыше приз будет привязан к указанному email.</p>
+                    <p class="giveaway-info-paragraph">Для каждой соцсети — свой розыгрыш при достижении 100к подписчиков. Участвовать можно 1 раз в каждом. Также есть 4-й суммарный розыгрыш, который активируется при каждых 50к суммарных подписчиков со всех соцсетей.</p>
+                    <p class="giveaway-info-paragraph">Для участия нажмите "Участвовать", введите email и нажмите "Изучить технику удача". Выигрыш регистрируется в системе, администратор выдает призы.</p>
                     
-                    <p class="giveaway-info-paragraph">📈 <strong>Система призов:</strong></p>
-                    <p class="giveaway-info-paragraph"><strong>Базовые призы (первое участие):</strong></p>
+                    <p class="giveaway-info-paragraph">📈 <strong>Система призов (индивидуальные розыгрыши):</strong></p>
+                    <p class="giveaway-info-paragraph">Приз зависит от общего количества ваших выигрышей (по email):</p>
                     <ul class="giveaway-prize-list">
-                        <li><strong>100к:</strong> 1 VIP "Просмотр вместе"</li>
-                        <li><strong>200к:</strong> "Просмотр вместе" + 1 неделя VIP</li>
-                        <li><strong>300к:</strong> +1 неделя VIP "Просмотр вместе" + VIP "ИИ Минко" на 1 неделю</li>
+                        <li><strong>1-й выигрыш:</strong> VIP "Просмотр вместе"</li>
+                        <li><strong>2-й выигрыш:</strong> VIP "ИИ Минко"</li>
+                        <li><strong>3-й выигрыш:</strong> +1 неделя VIP "Просмотр вместе" + +1 неделя VIP "ИИ Минко"</li>
                     </ul>
-                    <p class="giveaway-info-paragraph"><strong>Повторные участия:</strong></p>
-                    <p class="giveaway-info-paragraph">Приз зависит от вашей истории выигрышей на указанном email. Если вы не выиграли на предыдущих уровнях, приз будет соответствовать более низкому уровню. Если выиграли все 3 уровня, следующие розыгрыши дают бонусные призы: +1 неделя VIP "Просмотр вместе" + +1 неделя VIP "ИИ Минко".</p>
-                    <p class="giveaway-info-paragraph">Чем больше соцсетей достигают порога одновременно, тем больше общий призовой фонд (см. таблицы выше).</p>
+                    
+                    <p class="giveaway-info-paragraph">🎲 <strong>Суммарный розыгрыш:</strong></p>
+                    <p class="giveaway-info-paragraph">Каждые 50к суммарных подписчиков со всех соцсетей — новая попытка! Каждая попытка доступна 3 часа. Можно выиграть VIP "Просмотр" 3 дня и/или VIP "ИИ Минко" 3 дня (два отдельных розыгрыша). Если есть выигрыши в индивидуальных розыгрышах — +3 дня добавятся к имеющимся VIP.</p>
                 </div>
                 
+                <!-- Розыгрыши по соцсетям -->
                 <div class="giveaway-tables-grid">
-                    <!-- Таблица для 1 соцсети -->
-                    <div class="giveaway-table-wrapper">
-                        <h3 class="giveaway-table-title">1 соцсеть</h3>
-                        <div class="giveaway-table-container">
-                            <table class="giveaway-table">
-                                <thead>
-                                    <tr>
-                                        <th>Подписчиков</th>
-                                        <th>Приз</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>100к</td>
-                                        <td><strong>10.000 VIP</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>200к</td>
-                                        <td><strong>20.000 VIP</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>300к</td>
-                                        <td><strong>30.000 VIP</strong></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    <!-- Telegram 100к -->
+                    <div class="giveaway-table-wrapper giveaway-social-card" id="giveaway-card-telegram">
+                        <div class="giveaway-social-header telegram-header">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.161c-.166 1.737-1.181 5.92-1.67 7.857-.202.82-.6 1.093-1.001 1.12-.85.055-1.495-.56-2.32-1.099-1.027-.68-1.608-1.055-2.604-1.69-1.156-.72-.407-1.116.252-1.763.173-.168 3.18-2.92 3.24-3.17.007-.03.014-.15-.056-.212-.07-.062-.173-.041-.248-.024-.106.024-1.793 1.14-5.06 3.345-.48.336-.914.5-1.304.492-.428-.009-1.252-.242-1.865-.44-.752-.243-1.35-.37-1.297-.783.027-.216.325-.437.895-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635.099-.002.321.024.465.14.118.095.151.223.167.312.016.09.036.297.02.458z"/></svg>
+                            <h3>Telegram 100к</h3>
                         </div>
+                        <div class="giveaway-social-prizes">
+                            <div class="giveaway-prize-item">
+                                <img src="Prosmotr vmeste.jpg" alt="VIP Просмотр" class="giveaway-prize-img" draggable="false">
+                                <div class="giveaway-prize-detail">
+                                    <span class="giveaway-prize-name">VIP "Просмотр вместе"</span>
+                                    <span class="giveaway-prize-count">1 000 штук</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="giveaway-social-status" id="status-telegram">
+                            <span class="giveaway-status-text">Ожидание 100к подписчиков</span>
+                        </div>
+                        <button class="participate-btn" id="participate-btn-telegram" onclick="handleParticipate('telegram')" disabled>Участвовать</button>
                     </div>
-                    
-                    <!-- Таблица для 2 соцсетей -->
-                    <div class="giveaway-table-wrapper">
-                        <h3 class="giveaway-table-title">2 соцсети</h3>
-                        <div class="giveaway-table-container">
-                            <table class="giveaway-table">
-                                <thead>
-                                    <tr>
-                                        <th>Подписчиков</th>
-                                        <th>Приз</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>По 100к</td>
-                                        <td><strong>20.000 VIP</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>По 200к</td>
-                                        <td><strong>40.000 VIP</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>По 300к</td>
-                                        <td><strong>60.000 VIP</strong></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <!-- Instagram 100к -->
+                    <div class="giveaway-table-wrapper giveaway-social-card" id="giveaway-card-instagram">
+                        <div class="giveaway-social-header instagram-header">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.98-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.98-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                            <h3>Instagram 100к</h3>
                         </div>
+                        <div class="giveaway-social-prizes">
+                            <div class="giveaway-prize-item">
+                                <img src="Prosmotr vmeste.jpg" alt="VIP Просмотр" class="giveaway-prize-img" draggable="false">
+                                <div class="giveaway-prize-detail">
+                                    <span class="giveaway-prize-name">VIP "Просмотр вместе"</span>
+                                    <span class="giveaway-prize-count">5 000 штук</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="giveaway-social-status" id="status-instagram">
+                            <span class="giveaway-status-text">Ожидание 100к подписчиков</span>
+                        </div>
+                        <button class="participate-btn" id="participate-btn-instagram" onclick="handleParticipate('instagram')" disabled>Участвовать</button>
                     </div>
-                    
-                    <!-- Таблица для 3 соцсетей -->
-                    <div class="giveaway-table-wrapper">
-                        <h3 class="giveaway-table-title">3 соцсети</h3>
-                        <div class="giveaway-table-container">
-                            <table class="giveaway-table">
-                                <thead>
-                                    <tr>
-                                        <th>Подписчиков</th>
-                                        <th>Приз</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>По 100к</td>
-                                        <td><strong>30.000 VIP</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>По 200к</td>
-                                        <td><strong>60.000 VIP</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <td>По 300к</td>
-                                        <td><strong>90.000 VIP</strong></td>
-                                    </tr>
-                                </tbody>
-                            </table>
+
+                    <!-- TikTok 100к -->
+                    <div class="giveaway-table-wrapper giveaway-social-card" id="giveaway-card-tiktok">
+                        <div class="giveaway-social-header tiktok-header">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+                            <h3>TikTok 100к</h3>
                         </div>
+                        <div class="giveaway-social-prizes">
+                            <div class="giveaway-prize-item">
+                                <img src="Prosmotr vmeste.jpg" alt="VIP Просмотр" class="giveaway-prize-img" draggable="false">
+                                <div class="giveaway-prize-detail">
+                                    <span class="giveaway-prize-name">VIP "Просмотр вместе"</span>
+                                    <span class="giveaway-prize-count">10 000 штук</span>
+                                </div>
+                            </div>
+                            <div class="giveaway-prize-item">
+                                <img src="AI ICON.jpg" alt="VIP ИИ Минко" class="giveaway-prize-img" draggable="false">
+                                <div class="giveaway-prize-detail">
+                                    <span class="giveaway-prize-name">VIP "ИИ Минко"</span>
+                                    <span class="giveaway-prize-count">5 000 штук</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="giveaway-social-status" id="status-tiktok">
+                            <span class="giveaway-status-text">Ожидание 100к подписчиков</span>
+                        </div>
+                        <button class="participate-btn" id="participate-btn-tiktok" onclick="handleParticipate('tiktok')" disabled>Участвовать</button>
                     </div>
                 </div>
-                
-                <!-- Таблица участия в розыгрыше -->
-                <div class="giveaway-table-wrapper giveaway-participation-wrapper">
-                    <h3 class="giveaway-table-title">🎯 Участие в розыгрыше</h3>
-                    <div class="giveaway-table-container">
-                        <table class="giveaway-table giveaway-participation-table">
-                            <thead>
-                                <tr>
-                                    <th>Порог</th>
-                                    <th>Соцсети</th>
-                                    <th>Приз</th>
-                                    <th>Действие</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr id="participation-row-100k">
-                                    <td><strong>100к</strong></td>
-                                    <td class="social-names" id="social-names-100k">—</td>
-                                    <td class="prize-info">1 VIP "Просмотр вместе"<br><small>Разыгрывается: —</small></td>
-                                    <td>
-                                        <button class="participate-btn" id="participate-btn-100k" onclick="handleParticipate('100k')" disabled>
-                                            Участвовать
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr id="participation-row-200k">
-                                    <td><strong>200к</strong></td>
-                                    <td class="social-names" id="social-names-200k">—</td>
-                                    <td class="prize-info">"Просмотр вместе" + 1 неделя VIP<br><small>Разыгрывается: —</small></td>
-                                    <td>
-                                        <button class="participate-btn" id="participate-btn-200k" onclick="handleParticipate('200k')" disabled>
-                                            Участвовать
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr id="participation-row-300k">
-                                    <td><strong>300к</strong></td>
-                                    <td class="social-names" id="social-names-300k">—</td>
-                                    <td class="prize-info">+1 неделя VIP "Просмотр вместе"<br>+ VIP "ИИ Минко" на 1 неделю<br><small>Разыгрывается: —</small></td>
-                                    <td>
-                                        <button class="participate-btn" id="participate-btn-300k" onclick="handleParticipate('300k')" disabled>
-                                            Участвовать
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                <!-- Суммарный розыгрыш -->
+                <div class="giveaway-table-wrapper giveaway-combined-wrapper" id="giveaway-card-combined">
+                    <h3 class="giveaway-table-title">🎲 Суммарный розыгрыш (каждые 50к суммарных подписчиков)</h3>
+                    <div class="giveaway-combined-prizes">
+                        <div class="giveaway-prize-item">
+                            <img src="Prosmotr vmeste.jpg" alt="VIP Просмотр" class="giveaway-prize-img" draggable="false">
+                            <div class="giveaway-prize-detail">
+                                <span class="giveaway-prize-name">VIP "Просмотр вместе" 3 дня</span>
+                                <span class="giveaway-prize-count">Отдельный шанс</span>
+                            </div>
+                        </div>
+                        <div class="giveaway-prize-item">
+                            <img src="AI ICON.jpg" alt="VIP ИИ Минко" class="giveaway-prize-img" draggable="false">
+                            <div class="giveaway-prize-detail">
+                                <span class="giveaway-prize-name">VIP "ИИ Минко" 3 дня</span>
+                                <span class="giveaway-prize-count">Отдельный шанс</span>
+                            </div>
+                        </div>
                     </div>
-                    <p class="participation-note">💡 Приз зависит от вашей истории выигрышей. Если выиграли все 3 уровня, следующие розыгрыши дают бонусные призы!</p>
+                    <div class="giveaway-combined-info">
+                        <div class="giveaway-combined-stat">
+                            <span class="stat-label">Суммарно подписчиков:</span>
+                            <span class="stat-value" id="combined-total-subs">0</span>
+                        </div>
+                        <div class="giveaway-combined-stat">
+                            <span class="stat-label">Доступные попытки:</span>
+                            <span class="stat-value" id="combined-attempts">0</span>
+                        </div>
+                    </div>
+                    <div class="giveaway-combined-status" id="status-combined">
+                        <span class="giveaway-status-text">Ожидание 50к суммарных подписчиков</span>
+                    </div>
+                    <button class="participate-btn" id="participate-btn-combined" onclick="handleParticipate('combined')" disabled>Участвовать</button>
+                    <p class="participation-note">💡 Каждая попытка доступна 3 часа с момента достижения порога. Можно выиграть VIP "Просмотр" и/или VIP "ИИ Минко"!</p>
                 </div>
                 
-                <p class="giveaway-note">💡 Подписывайтесь на все наши соцсети и участвуйте в розыгрыше! Чем больше подписчиков, тем больше призов!</p>
+                <p class="giveaway-note">💡 Подписывайтесь на все наши соцсети — больше подписчиков = больше розыгрышей!</p>
             </div>
             
-            <!-- Тестовая панель для проверки системы участия -->
+            <!-- Тестовая панель -->
             <div class="test-panel" id="testPanel" style="margin-top: 2rem; padding: 1.5rem; background: rgba(255, 193, 7, 0.1); border: 2px solid rgba(255, 193, 7, 0.3); border-radius: 12px;">
                 <h3 style="color: #ffc107; margin-bottom: 1rem; text-align: center;">🧪 Тестовая панель</h3>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 1rem;">
-                    <button class="test-btn" onclick="setTestCounters(100000, 100000, 100000)">100к все соцсети</button>
-                    <button class="test-btn" onclick="setTestCounters(200000, 200000, 200000)">200к все соцсети</button>
-                    <button class="test-btn" onclick="setTestCounters(300000, 300000, 300000)">300к все соцсети</button>
-                    <button class="test-btn" onclick="setTestCounters(100000, 0, 0)">100к только Telegram</button>
-                    <button class="test-btn" onclick="setTestCounters(200000, 200000, 0)">200к Telegram + Instagram</button>
-                    <button class="test-btn" onclick="resetTestCounters()">Сбросить (текущие значения)</button>
+                    <button class="test-btn" onclick="setTestCounters(100000, 0, 0)">100к Telegram</button>
+                    <button class="test-btn" onclick="setTestCounters(0, 100000, 0)">100к Instagram</button>
+                    <button class="test-btn" onclick="setTestCounters(0, 0, 100000)">100к TikTok</button>
+                    <button class="test-btn" onclick="setTestCounters(100000, 100000, 100000)">100к все</button>
+                    <button class="test-btn" onclick="setTestCounters(20000, 15000, 15000)">50к суммарно</button>
+                    <button class="test-btn" onclick="setTestCounters(40000, 30000, 30000)">100к суммарно</button>
+                    <button class="test-btn" onclick="setTestCounters(120000, 120000, 120000)">360к суммарно (7 попыток)</button>
+                    <button class="test-btn" onclick="resetTestCounters()">Сбросить</button>
                 </div>
                 <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin-bottom: 1rem;">
                     <button class="test-btn" onclick="clearGiveawayWinners()" style="background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.4);">Очистить выигрыши</button>
-                    <button class="test-btn" onclick="showGiveawayStats()" style="background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4);">Статистика розыгрышей</button>
+                    <button class="test-btn" onclick="showGiveawayStats()" style="background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4);">Статистика</button>
+                    <button class="test-btn" onclick="skipCombinedTime()" style="background: rgba(168, 85, 247, 0.2); border-color: rgba(168, 85, 247, 0.4);">⏩ Пропустить 2ч 58мин</button>
                 </div>
                 <div id="testStats" style="margin-top: 1rem; padding: 1rem; background: rgba(0, 0, 0, 0.2); border-radius: 8px; display: none;">
                     <pre id="testStatsContent" style="color: rgba(255, 255, 255, 0.9); font-size: 0.85rem; margin: 0; white-space: pre-wrap;"></pre>
@@ -415,7 +388,7 @@
             <div class="giveaway-modal-body" id="giveawayModalBody">
                 <!-- Форма участия -->
                 <div class="giveaway-form-step" id="giveawayFormStep">
-                    <h2 class="giveaway-modal-title">🎁 Участие в розыгрыше</h2>
+                    <h2 class="giveaway-modal-title" id="giveawayModalTitle">🎁 Участие в розыгрыше</h2>
                     <p class="giveaway-modal-subtitle" id="giveawayModalSubtitle">Введите ваш email для участия</p>
                     <form class="giveaway-form" id="giveawayForm" onsubmit="handleGiveawaySubmit(event)">
                         <div class="giveaway-form-group">

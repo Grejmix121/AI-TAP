@@ -696,45 +696,160 @@ body::-webkit-scrollbar-thumb:hover {
     font-style: italic;
 }
 
-/* Таблица участия в розыгрыше */
-.giveaway-participation-wrapper {
-    margin-top: 2rem;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(236, 72, 153, 0.25));
-    border: 2px solid rgba(168, 85, 247, 0.4);
+/* Карточки розыгрышей по соцсетям */
+.giveaway-social-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.75rem;
+    padding: 1.25rem;
 }
 
-.giveaway-participation-table {
-    font-size: 0.9rem;
+.giveaway-social-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    width: 100%;
+    justify-content: center;
 }
 
-.giveaway-participation-table th {
-    font-size: 0.9rem;
-    padding: 0.85rem 0.5rem;
+.giveaway-social-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
 }
 
-.giveaway-participation-table td {
-    padding: 1rem 0.5rem;
-    vertical-align: middle;
+.giveaway-social-header svg {
+    flex-shrink: 0;
 }
 
-.giveaway-participation-table .social-names {
-    color: var(--primary-color);
-    font-weight: 600;
+.telegram-header { background: linear-gradient(135deg, rgba(0, 136, 204, 0.4), rgba(34, 158, 217, 0.4)); }
+.instagram-header { background: linear-gradient(135deg, rgba(228, 64, 95, 0.4), rgba(245, 96, 64, 0.4)); }
+.tiktok-header { background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(255, 0, 80, 0.4)); }
+
+.giveaway-social-prizes {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.giveaway-prize-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: rgba(168, 85, 247, 0.1);
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.giveaway-prize-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+}
+
+.giveaway-prize-detail {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+}
+
+.giveaway-prize-name {
     font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
 }
 
-.giveaway-participation-table .prize-info {
-    text-align: left;
-    font-size: 0.8rem;
-    line-height: 1.4;
-}
-
-.giveaway-participation-table .prize-info small {
-    display: block;
-    color: rgba(255, 255, 255, 0.6);
+.giveaway-prize-count {
     font-size: 0.75rem;
-    margin-top: 0.5rem;
-    font-style: italic;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.giveaway-social-status {
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    width: 100%;
+}
+
+.giveaway-status-text {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.giveaway-status-text.active {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.giveaway-status-text.done {
+    color: #f59e0b;
+}
+
+/* Суммарный розыгрыш */
+.giveaway-combined-wrapper {
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2));
+    border: 2px solid rgba(168, 85, 247, 0.4);
+    text-align: center;
+}
+
+.giveaway-combined-prizes {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0.75rem 0;
+}
+
+.giveaway-combined-info {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0.75rem 0;
+}
+
+.giveaway-combined-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    min-width: 120px;
+}
+
+.giveaway-combined-stat .stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.giveaway-combined-stat .stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+.giveaway-combined-status {
+    padding: 0.5rem 0.75rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
 }
 
 .limit-reached-text {
@@ -743,6 +858,18 @@ body::-webkit-scrollbar-thumb:hover {
     margin-top: 0.5rem;
     font-style: italic;
     text-align: center;
+}
+
+/* Изображение приза в результате */
+.giveaway-result-prize-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 2px solid rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+    margin: 0 auto 0.5rem;
+    display: block;
 }
 
 .participate-btn {
@@ -822,12 +949,14 @@ body::-webkit-scrollbar-thumb:hover {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
+    -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
 }
 
 .giveaway-modal-content {
     position: relative;
     background: linear-gradient(135deg, rgba(20, 20, 30, 0.98), rgba(30, 30, 45, 0.98));
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-radius: 20px;
     border: 2px solid rgba(168, 85, 247, 0.3);
@@ -1807,14 +1936,20 @@ body::-webkit-scrollbar-thumb:hover {
         padding-top: 0.75rem;
     }
     
-    .giveaway-participation-table {
-        font-size: 0.75rem;
+    .giveaway-social-header h3 {
+        font-size: 0.9rem;
     }
     
-    .giveaway-participation-table th,
-    .giveaway-participation-table td {
-        padding: 0.6rem 0.3rem;
+    .giveaway-prize-name {
+        font-size: 0.8rem;
+    }
+    
+    .giveaway-prize-count {
         font-size: 0.7rem;
+    }
+    
+    .giveaway-combined-stat .stat-value {
+        font-size: 1.1rem;
     }
     
     .participate-btn {
@@ -2020,22 +2155,22 @@ body::-webkit-scrollbar-thumb:hover {
         padding-top: 0.75rem;
     }
     
-    .giveaway-participation-table {
-        font-size: 0.7rem;
+    .giveaway-social-card {
+        padding: 1rem;
     }
     
-    .giveaway-participation-table th,
-    .giveaway-participation-table td {
-        padding: 0.5rem 0.25rem;
-        font-size: 0.65rem;
+    .giveaway-prize-img {
+        width: 35px;
+        height: 35px;
     }
     
-    .giveaway-participation-table .prize-info {
-        font-size: 0.65rem;
+    .giveaway-combined-info {
+        gap: 0.75rem;
     }
     
-    .giveaway-participation-table .prize-info small {
-        font-size: 0.6rem;
+    .giveaway-combined-stat {
+        min-width: 100px;
+        padding: 0.5rem 0.75rem;
     }
     
     .participate-btn {
