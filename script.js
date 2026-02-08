@@ -127,9 +127,7 @@ async function loadCounterFromSupabase(counterType) {
 async function initializeCounters() {
     const initialValues = {
         wish: 132843,
-        // ВАЖНО: Telegram НЕ включаем - его обновляет бот с реальным количеством подписчиков
-        instagram: 16324,
-        tiktok: 20163,
+        // ВАЖНО: Telegram, Instagram и TikTok НЕ включаем - их обновляет бот с реальным количеством подписчиков
         project_progress: Math.round(INITIAL_PROGRESS * 10) // Умножаем на 10 для хранения в Supabase
     };
     
@@ -158,10 +156,10 @@ async function initializeCounters() {
     try {
         // Используем upsert для установки начальных значений
         // Устанавливаем начальные значения если счетчик меньше начального или равен 0
-        // ВАЖНО: Telegram пропускаем - его обновляет бот
+        // ВАЖНО: Telegram, Instagram и TikTok пропускаем - их обновляет бот с реальным количеством подписчиков
         for (const [counterType, initialCount] of Object.entries(initialValues)) {
-            // Пропускаем Telegram - его обновляет бот автоматически
-            if (counterType === 'telegram') {
+            // Пропускаем соцсети - их обновляет бот автоматически
+            if (counterType === 'telegram' || counterType === 'instagram' || counterType === 'tiktok') {
                 continue;
             }
             
@@ -186,17 +184,20 @@ async function initializeCounters() {
             }
         }
         
-        // Проверяем что Telegram не был перезаписан
-        const { data: telegramCheck } = await client
-            .from('startzero_counters')
-            .select('count, updated_at')
-            .eq('counter_type', 'telegram')
-            .maybeSingle();
-        
-        if (telegramCheck) {
-            console.log(`✅ Telegram счетчик в базе после инициализации: ${telegramCheck.count.toLocaleString('ru-RU')} (обновлено: ${new Date(telegramCheck.updated_at).toLocaleString('ru-RU')})`);
-        } else {
-            console.log('⚠️  Telegram счетчик не найден в базе - бот создаст его при следующем обновлении');
+        // Проверяем что соцсети не были перезаписаны
+        const socialNetworks = ['telegram', 'instagram', 'tiktok'];
+        for (const social of socialNetworks) {
+            const { data: socialCheck } = await client
+                .from('startzero_counters')
+                .select('count, updated_at')
+                .eq('counter_type', social)
+                .maybeSingle();
+            
+            if (socialCheck) {
+                console.log(`✅ ${social} счетчик в базе после инициализации: ${socialCheck.count.toLocaleString('ru-RU')} (обновлено: ${new Date(socialCheck.updated_at).toLocaleString('ru-RU')})`);
+            } else {
+                console.log(`⚠️  ${social} счетчик не найден в базе - бот создаст его при следующем обновлении`);
+            }
         }
     } catch (error) {
         console.error('Ошибка инициализации счетчиков:', error);
@@ -582,19 +583,39 @@ async function getCurrentProgress() {
                 .eq('counter_type', 'project_progress')
                 .maybeSingle();
             
-            if (!error && data) {
+            if (!error && data && data.count !== null && data.count !== undefined) {
                 // В Supabase храним как целое число (умноженное на 10 для точности до 0.1%)
-                // Например, 85.3% хранится как 853, 85.6% как 856
-                return parseFloat(data.count) / 10 || INITIAL_PROGRESS;
+                // Например, 85.3% хранится как 853, 85.6% как 856, 90% как 900
+                const progress = parseFloat(data.count) / 10;
+                console.log(`📊 Прогресс из Supabase: count=${data.count}, progress=${progress.toFixed(1)}%`);
+                
+                // Проверяем валидность значения
+                if (progress >= 0 && progress <= 100) {
+                    return progress;
+                } else {
+                    console.warn(`⚠️  Некорректное значение прогресса из базы: ${progress}, используем начальное значение`);
+                    return INITIAL_PROGRESS;
+                }
+            } else {
+                console.log(`⚠️  Прогресс не найден в Supabase, используем начальное значение: ${INITIAL_PROGRESS}%`);
             }
         } catch (error) {
-            console.error('Ошибка загрузки прогресса:', error);
+            console.error('❌ Ошибка загрузки прогресса из Supabase:', error);
         }
+    } else {
+        console.log('⚠️  Supabase клиент не инициализирован, используем localStorage');
     }
     
     // Fallback на localStorage
     const storedProgress = localStorage.getItem(PROGRESS_STORAGE_KEY);
-    return storedProgress ? parseFloat(storedProgress) : INITIAL_PROGRESS;
+    if (storedProgress) {
+        const progress = parseFloat(storedProgress);
+        console.log(`📊 Прогресс из localStorage: ${progress.toFixed(1)}%`);
+        return progress;
+    }
+    
+    console.log(`📊 Используем начальное значение прогресса: ${INITIAL_PROGRESS}%`);
+    return INITIAL_PROGRESS;
 }
 
 // Сохранить прогресс в Supabase и localStorage
@@ -753,36 +774,51 @@ function updateProgressDisplay(progress) {
     const progressFill = document.getElementById('progressFill');
     const progressText = document.getElementById('progressText');
     
+    // Ограничиваем прогресс до 100%
+    const clampedProgress = Math.min(Math.max(progress, 0), 100);
+    
     if (progressFill) {
-        progressFill.style.width = progress + '%';
+        // Убеждаемся, что значение применяется правильно
+        progressFill.style.width = clampedProgress.toFixed(1) + '%';
+        // Принудительно обновляем стиль для надежности
+        progressFill.setAttribute('style', `width: ${clampedProgress.toFixed(1)}%`);
+        console.log(`📊 Обновление прогресс-бара: ${clampedProgress.toFixed(1)}%`);
     }
     
     if (progressText) {
-        progressText.textContent = progress.toFixed(1) + '% готово';
+        progressText.textContent = clampedProgress.toFixed(1) + '% готово';
+        console.log(`📊 Обновление текста прогресса: ${clampedProgress.toFixed(1)}% готово`);
     }
 }
 
 // Загрузить и обновить прогресс проекта
 async function loadAndUpdateProgress() {
     try {
+        // ВАЖНО: Сначала загружаем текущий прогресс из Supabase
         let currentProgress = await getCurrentProgress();
+        console.log(`📊 Загружен прогресс из базы: ${currentProgress.toFixed(1)}%`);
+        
+        // СРАЗУ обновляем визуальное отображение с актуальным значением из базы
+        updateProgressDisplay(currentProgress);
         
         // Проверяем, нужно ли обновить прогресс
         if (shouldUpdateProgress()) {
             // Увеличиваем прогресс на 0.3%
-            currentProgress = increaseProgress(currentProgress);
+            const newProgress = increaseProgress(currentProgress);
             
             // Сохраняем новый прогресс
-            await saveProgress(currentProgress);
+            await saveProgress(newProgress);
             
             // Сохраняем дату обновления
             saveLastProgressUpdate();
             
-            console.log('Прогресс проекта обновлен до:', currentProgress + '%');
+            console.log(`✅ Прогресс проекта обновлен: ${currentProgress.toFixed(1)}% → ${newProgress.toFixed(1)}%`);
+            
+            // Обновляем визуальное отображение с новым значением
+            updateProgressDisplay(newProgress);
+        } else {
+            console.log(`ℹ️  Прогресс не требует обновления. Текущее значение: ${currentProgress.toFixed(1)}%`);
         }
-        
-        // Обновляем визуальное отображение
-        updateProgressDisplay(currentProgress);
         
         // Обновляем таймер обратного отсчета
         updateCountdownTimer();
@@ -792,13 +828,20 @@ async function loadAndUpdateProgress() {
         
         // Проверяем обновление прогресса каждую минуту (на случай если пользователь оставил страницу открытой)
         setInterval(async () => {
+            // Сначала загружаем актуальное значение из базы
+            let progress = await getCurrentProgress();
+            
+            // Обновляем визуальное отображение с актуальным значением из базы
+            updateProgressDisplay(progress);
+            
+            // Проверяем, нужно ли увеличить прогресс
             if (shouldUpdateProgress()) {
-                let progress = await getCurrentProgress();
+                const oldProgress = progress;
                 progress = increaseProgress(progress);
                 await saveProgress(progress);
                 saveLastProgressUpdate();
                 updateProgressDisplay(progress);
-                console.log('Прогресс автоматически обновлен до:', progress + '%');
+                console.log(`✅ Прогресс автоматически обновлен: ${oldProgress.toFixed(1)}% → ${progress.toFixed(1)}%`);
             }
         }, 60000); // Проверяем каждую минуту
     } catch (error) {
