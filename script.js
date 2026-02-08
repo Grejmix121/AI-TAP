@@ -1211,6 +1211,264 @@ async function getTelegramSubscribers() {
     }
 }
 
+// Получить реальное количество подписчиков Instagram
+// Бот обновляет данные в Supabase, сайт просто читает их оттуда
+async function getInstagramFollowers() {
+    const client = getSupabaseClient();
+    if (!client) {
+        return 0;
+    }
+    
+    try {
+        const { data, error } = await client
+            .from('startzero_counters')
+            .select('count, updated_at')
+            .eq('counter_type', 'instagram')
+            .maybeSingle();
+        
+        if (error || !data) {
+            return 0;
+        }
+        
+        const count = parseFloat(data.count) || 0;
+        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+        const now = new Date();
+        
+        // Проверяем свежесть данных (бот обновляет каждые 5 минут)
+        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+        
+        if (!isDataFresh) {
+            // Данные устарели
+            return 0;
+        }
+        
+        return count;
+    } catch (error) {
+        console.error('Ошибка получения Instagram подписчиков:', error);
+        return 0;
+    }
+}
+
+// Получить реальное количество подписчиков TikTok
+// Бот обновляет данные в Supabase, сайт просто читает их оттуда
+async function getTikTokFollowers() {
+    const client = getSupabaseClient();
+    if (!client) {
+        return 0;
+    }
+    
+    try {
+        const { data, error } = await client
+            .from('startzero_counters')
+            .select('count, updated_at')
+            .eq('counter_type', 'tiktok')
+            .maybeSingle();
+        
+        if (error || !data) {
+            return 0;
+        }
+        
+        const count = parseFloat(data.count) || 0;
+        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+        const now = new Date();
+        
+        // Проверяем свежесть данных (бот обновляет каждые 5 минут)
+        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+        
+        if (!isDataFresh) {
+            // Данные устарели
+            return 0;
+        }
+        
+        return count;
+    } catch (error) {
+        console.error('Ошибка получения TikTok подписчиков:', error);
+        return 0;
+    }
+}
+
+// Загрузить счетчик Instagram (аналогично Telegram)
+async function loadInstagramCount() {
+    console.log('🔄 Загрузка счетчика Instagram из Supabase...');
+    
+    const instagramCountElement = document.getElementById('instagramCount');
+    
+    // ВСЕГДА сначала показываем "подсчет..." пока данные не загружены
+    if (instagramCountElement) {
+        instagramCountElement.textContent = 'подсчет...';
+        instagramCountElement.style.opacity = '0.7';
+        instagramCountElement.style.fontSize = '1.2rem';
+        instagramCountElement.style.fontStyle = 'italic';
+        instagramCountElement.classList.add('counting');
+    }
+    
+    // Принудительно получаем свежие данные из Supabase с информацией о времени обновления
+    const client = getSupabaseClient();
+    if (!client) {
+        console.error('❌ Supabase клиент не инициализирован');
+        return;
+    }
+    
+    try {
+        const { data, error } = await client
+            .from('startzero_counters')
+            .select('count, updated_at')
+            .eq('counter_type', 'instagram')
+            .maybeSingle();
+        
+        if (error) {
+            console.error('❌ Ошибка загрузки Instagram счетчика:', error);
+            return;
+        }
+        
+        if (!data) {
+            // Данных нет в базе - показываем "подсчет..."
+            console.log('⏳ Instagram счетчик не найден в базе, показываем "подсчет..."');
+            if (instagramCountElement) {
+                instagramCountElement.textContent = 'подсчет...';
+                instagramCountElement.style.opacity = '0.7';
+                instagramCountElement.style.fontSize = '1.2rem';
+                instagramCountElement.style.fontStyle = 'italic';
+                instagramCountElement.classList.add('counting');
+            }
+            return;
+        }
+        
+        const instagramCount = parseFloat(data.count) || 0;
+        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+        const now = new Date();
+        
+        // Проверяем, насколько свежие данные (бот обновляет каждые 5 минут)
+        // Если данные старше 10 минут - считаем их устаревшими и показываем "подсчет..."
+        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+        
+        if (instagramCountElement) {
+            if (instagramCount > 0 && isDataFresh) {
+                // Данные свежие - показываем реальное количество
+                console.log(`📊 Получено из Supabase: ${instagramCount.toLocaleString('ru-RU')} подписчиков Instagram (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'})`);
+                instagramCountElement.style.opacity = '1';
+                instagramCountElement.style.fontSize = '1.8rem';
+                instagramCountElement.style.fontStyle = 'normal';
+                instagramCountElement.classList.remove('counting');
+                animateNumber(instagramCountElement, 0, instagramCount, 800);
+                console.log(`✅ Instagram счетчик обновлен на странице: ${instagramCount.toLocaleString('ru-RU')}`);
+            } else {
+                // Данные устарели или их нет - показываем "подсчет..."
+                if (!isDataFresh) {
+                    console.log(`⏳ Данные Instagram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                } else {
+                    console.log('⏳ Данные Instagram еще не загружены, показываем "подсчет..."');
+                }
+                instagramCountElement.textContent = 'подсчет...';
+                instagramCountElement.style.opacity = '0.7';
+                instagramCountElement.style.fontSize = '1.2rem';
+                instagramCountElement.style.fontStyle = 'italic';
+                instagramCountElement.classList.add('counting');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Ошибка при загрузке Instagram счетчика:', error);
+        if (instagramCountElement) {
+            instagramCountElement.textContent = 'подсчет...';
+            instagramCountElement.style.opacity = '0.7';
+            instagramCountElement.style.fontSize = '1.2rem';
+            instagramCountElement.style.fontStyle = 'italic';
+            instagramCountElement.classList.add('counting');
+        }
+    }
+}
+
+// Загрузить счетчик TikTok (аналогично Telegram)
+async function loadTikTokCount() {
+    console.log('🔄 Загрузка счетчика TikTok из Supabase...');
+    
+    const tiktokCountElement = document.getElementById('tiktokCount');
+    
+    // ВСЕГДА сначала показываем "подсчет..." пока данные не загружены
+    if (tiktokCountElement) {
+        tiktokCountElement.textContent = 'подсчет...';
+        tiktokCountElement.style.opacity = '0.7';
+        tiktokCountElement.style.fontSize = '1.2rem';
+        tiktokCountElement.style.fontStyle = 'italic';
+        tiktokCountElement.classList.add('counting');
+    }
+    
+    // Принудительно получаем свежие данные из Supabase с информацией о времени обновления
+    const client = getSupabaseClient();
+    if (!client) {
+        console.error('❌ Supabase клиент не инициализирован');
+        return;
+    }
+    
+    try {
+        const { data, error } = await client
+            .from('startzero_counters')
+            .select('count, updated_at')
+            .eq('counter_type', 'tiktok')
+            .maybeSingle();
+        
+        if (error) {
+            console.error('❌ Ошибка загрузки TikTok счетчика:', error);
+            return;
+        }
+        
+        if (!data) {
+            // Данных нет в базе - показываем "подсчет..."
+            console.log('⏳ TikTok счетчик не найден в базе, показываем "подсчет..."');
+            if (tiktokCountElement) {
+                tiktokCountElement.textContent = 'подсчет...';
+                tiktokCountElement.style.opacity = '0.7';
+                tiktokCountElement.style.fontSize = '1.2rem';
+                tiktokCountElement.style.fontStyle = 'italic';
+                tiktokCountElement.classList.add('counting');
+            }
+            return;
+        }
+        
+        const tiktokCount = parseFloat(data.count) || 0;
+        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+        const now = new Date();
+        
+        // Проверяем, насколько свежие данные (бот обновляет каждые 5 минут)
+        // Если данные старше 10 минут - считаем их устаревшими и показываем "подсчет..."
+        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+        
+        if (tiktokCountElement) {
+            if (tiktokCount > 0 && isDataFresh) {
+                // Данные свежие - показываем реальное количество
+                console.log(`📊 Получено из Supabase: ${tiktokCount.toLocaleString('ru-RU')} подписчиков TikTok (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'})`);
+                tiktokCountElement.style.opacity = '1';
+                tiktokCountElement.style.fontSize = '1.8rem';
+                tiktokCountElement.style.fontStyle = 'normal';
+                tiktokCountElement.classList.remove('counting');
+                animateNumber(tiktokCountElement, 0, tiktokCount, 800);
+                console.log(`✅ TikTok счетчик обновлен на странице: ${tiktokCount.toLocaleString('ru-RU')}`);
+            } else {
+                // Данные устарели или их нет - показываем "подсчет..."
+                if (!isDataFresh) {
+                    console.log(`⏳ Данные TikTok устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                } else {
+                    console.log('⏳ Данные TikTok еще не загружены, показываем "подсчет..."');
+                }
+                tiktokCountElement.textContent = 'подсчет...';
+                tiktokCountElement.style.opacity = '0.7';
+                tiktokCountElement.style.fontSize = '1.2rem';
+                tiktokCountElement.style.fontStyle = 'italic';
+                tiktokCountElement.classList.add('counting');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Ошибка при загрузке TikTok счетчика:', error);
+        if (tiktokCountElement) {
+            tiktokCountElement.textContent = 'подсчет...';
+            tiktokCountElement.style.opacity = '0.7';
+            tiktokCountElement.style.fontSize = '1.2rem';
+            tiktokCountElement.style.fontStyle = 'italic';
+            tiktokCountElement.classList.add('counting');
+        }
+    }
+}
+
 // Загрузить счетчики соцсетей
 async function loadSocialCounts() {
     // Для Telegram получаем реальное количество подписчиков из Supabase
@@ -1303,18 +1561,16 @@ async function loadSocialCounts() {
         }
     }
     
-    // Для остальных соцсетей пока используем счетчики из Supabase
-    const otherSocials = ['instagram', 'tiktok'];
-    for (const social of otherSocials) {
-        const count = await loadCounterFromSupabase(social);
-        const countElement = document.getElementById(social + 'Count');
-        if (countElement) {
-            animateNumber(countElement, 0, count, 800);
-        }
-    }
+    // Для Instagram получаем реальное количество подписчиков из Supabase (аналогично Telegram)
+    await loadInstagramCount();
     
-    // Обновляем счетчик Telegram каждую минуту (бот обновляет в Supabase каждые 5 минут)
+    // Для TikTok получаем реальное количество подписчиков из Supabase (аналогично Telegram)
+    await loadTikTokCount();
+    
+    // Обновляем счетчики Telegram и Instagram каждую минуту (бот обновляет в Supabase каждые 5 минут)
     // Это нужно чтобы показывать актуальные данные, которые бот уже сохранил
+    
+    // Интервал для Telegram
     setInterval(async () => {
         const telegramCountElement = document.getElementById('telegramCount');
         if (!telegramCountElement) return;
@@ -1394,6 +1650,168 @@ async function loadSocialCounts() {
             console.error('Ошибка обновления Telegram счетчика:', error);
         }
     }, 60 * 1000); // Обновляем каждую минуту
+    
+    // Интервал для Instagram
+    setInterval(async () => {
+        const instagramCountElement = document.getElementById('instagramCount');
+        if (!instagramCountElement) return;
+        
+        const client = getSupabaseClient();
+        if (!client) return;
+        
+        try {
+            const { data, error } = await client
+                .from('startzero_counters')
+                .select('count, updated_at')
+                .eq('counter_type', 'instagram')
+                .maybeSingle();
+            
+            if (error || !data) {
+                // Данных нет - показываем "подсчет..."
+                const currentText = instagramCountElement.textContent.trim();
+                if (currentText !== 'подсчет...') {
+                    instagramCountElement.textContent = 'подсчет...';
+                    instagramCountElement.style.opacity = '0.7';
+                    instagramCountElement.style.fontSize = '1.2rem';
+                    instagramCountElement.style.fontStyle = 'italic';
+                    instagramCountElement.classList.add('counting');
+                }
+                return;
+            }
+            
+            const newInstagramCount = parseFloat(data.count) || 0;
+            const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+            const now = new Date();
+            const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+            
+            const currentText = instagramCountElement.textContent.trim();
+            
+            if (!isDataFresh) {
+                // Данные устарели - показываем "подсчет..."
+                if (currentText !== 'подсчет...') {
+                    console.log(`⏳ Данные Instagram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                    instagramCountElement.textContent = 'подсчет...';
+                    instagramCountElement.style.opacity = '0.7';
+                    instagramCountElement.style.fontSize = '1.2rem';
+                    instagramCountElement.style.fontStyle = 'italic';
+                    instagramCountElement.classList.add('counting');
+                }
+                return;
+            }
+            
+            // Данные свежие
+            if (currentText === 'подсчет...' && newInstagramCount > 0) {
+                // Если показывается "подсчет..." и данные получены - обновляем
+                instagramCountElement.style.opacity = '1';
+                instagramCountElement.style.fontSize = '1.8rem';
+                instagramCountElement.style.fontStyle = 'normal';
+                instagramCountElement.classList.remove('counting');
+                animateNumber(instagramCountElement, 0, newInstagramCount, 500);
+                console.log(`✅ Instagram счетчик обновлен: ${newInstagramCount.toLocaleString('ru-RU')} подписчиков`);
+            } 
+            // Если данные есть и значение изменилось - обновляем
+            else if (currentText !== 'подсчет...' && newInstagramCount > 0) {
+                const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
+                if (Math.abs(currentCount - newInstagramCount) > 0) {
+                    console.log(`🔄 Обновление Instagram счетчика: ${currentCount} → ${newInstagramCount}`);
+                    animateNumber(instagramCountElement, currentCount, newInstagramCount, 500);
+                }
+            }
+            // Если данных еще нет - показываем "подсчет..."
+            else if (newInstagramCount === 0) {
+                if (currentText !== 'подсчет...') {
+                    instagramCountElement.textContent = 'подсчет...';
+                    instagramCountElement.style.opacity = '0.7';
+                    instagramCountElement.style.fontSize = '1.2rem';
+                    instagramCountElement.style.fontStyle = 'italic';
+                    instagramCountElement.classList.add('counting');
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка обновления Instagram счетчика:', error);
+        }
+    }, 60 * 1000); // Обновляем каждую минуту
+    
+    // Интервал для TikTok
+    setInterval(async () => {
+        const tiktokCountElement = document.getElementById('tiktokCount');
+        if (!tiktokCountElement) return;
+        
+        const client = getSupabaseClient();
+        if (!client) return;
+        
+        try {
+            const { data, error } = await client
+                .from('startzero_counters')
+                .select('count, updated_at')
+                .eq('counter_type', 'tiktok')
+                .maybeSingle();
+            
+            if (error || !data) {
+                // Данных нет - показываем "подсчет..."
+                const currentText = tiktokCountElement.textContent.trim();
+                if (currentText !== 'подсчет...') {
+                    tiktokCountElement.textContent = 'подсчет...';
+                    tiktokCountElement.style.opacity = '0.7';
+                    tiktokCountElement.style.fontSize = '1.2rem';
+                    tiktokCountElement.style.fontStyle = 'italic';
+                    tiktokCountElement.classList.add('counting');
+                }
+                return;
+            }
+            
+            const newTikTokCount = parseFloat(data.count) || 0;
+            const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
+            const now = new Date();
+            const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
+            
+            const currentText = tiktokCountElement.textContent.trim();
+            
+            if (!isDataFresh) {
+                // Данные устарели - показываем "подсчет..."
+                if (currentText !== 'подсчет...') {
+                    console.log(`⏳ Данные TikTok устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
+                    tiktokCountElement.textContent = 'подсчет...';
+                    tiktokCountElement.style.opacity = '0.7';
+                    tiktokCountElement.style.fontSize = '1.2rem';
+                    tiktokCountElement.style.fontStyle = 'italic';
+                    tiktokCountElement.classList.add('counting');
+                }
+                return;
+            }
+            
+            // Данные свежие
+            if (currentText === 'подсчет...' && newTikTokCount > 0) {
+                // Если показывается "подсчет..." и данные получены - обновляем
+                tiktokCountElement.style.opacity = '1';
+                tiktokCountElement.style.fontSize = '1.8rem';
+                tiktokCountElement.style.fontStyle = 'normal';
+                tiktokCountElement.classList.remove('counting');
+                animateNumber(tiktokCountElement, 0, newTikTokCount, 500);
+                console.log(`✅ TikTok счетчик обновлен: ${newTikTokCount.toLocaleString('ru-RU')} подписчиков`);
+            } 
+            // Если данные есть и значение изменилось - обновляем
+            else if (currentText !== 'подсчет...' && newTikTokCount > 0) {
+                const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
+                if (Math.abs(currentCount - newTikTokCount) > 0) {
+                    console.log(`🔄 Обновление TikTok счетчика: ${currentCount} → ${newTikTokCount}`);
+                    animateNumber(tiktokCountElement, currentCount, newTikTokCount, 500);
+                }
+            }
+            // Если данных еще нет - показываем "подсчет..."
+            else if (newTikTokCount === 0) {
+                if (currentText !== 'подсчет...') {
+                    tiktokCountElement.textContent = 'подсчет...';
+                    tiktokCountElement.style.opacity = '0.7';
+                    tiktokCountElement.style.fontSize = '1.2rem';
+                    tiktokCountElement.style.fontStyle = 'italic';
+                    tiktokCountElement.classList.add('counting');
+                }
+            }
+        } catch (error) {
+            console.error('Ошибка обновления TikTok счетчика:', error);
+        }
+    }, 60 * 1000); // Обновляем каждую минуту
 }
 
 // Правильные URL для соцсетей (всегда используем эти значения)
@@ -1417,9 +1835,9 @@ async function handleSocialClick(event, socialName) {
             return; // Не можем перейти без URL
         }
         
-        // Для Telegram полностью удален счетчик нажатий - только переход по ссылке
+        // Для Telegram и Instagram полностью удален счетчик нажатий - только переход по ссылке
         // Для остальных соцсетей оставляем счетчик нажатий
-        if (socialName !== 'telegram') {
+        if (socialName !== 'telegram' && socialName !== 'instagram') {
             // ВАЖНО: Проверяем онлайн в Supabase, чтобы каждый пользователь мог голосовать только один раз
             const hasClicked = await hasUserClicked(socialName);
             

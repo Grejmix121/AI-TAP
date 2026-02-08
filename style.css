@@ -544,9 +544,38 @@ body::-webkit-scrollbar-thumb:hover {
     line-height: 1.5;
 }
 
+.giveaway-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.giveaway-table-wrapper {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.giveaway-table-wrapper:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3);
+    border-color: rgba(168, 85, 247, 0.4);
+}
+
+.giveaway-table-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
 .giveaway-table-container {
     overflow-x: auto;
-    margin-bottom: 1rem;
     -webkit-overflow-scrolling: touch;
 }
 
@@ -554,9 +583,9 @@ body::-webkit-scrollbar-thumb:hover {
     width: 100%;
     border-collapse: collapse;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .giveaway-table thead {
@@ -1177,6 +1206,20 @@ body::-webkit-scrollbar-thumb:hover {
         padding: 1.25rem;
     }
     
+    .giveaway-tables-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .giveaway-table-wrapper {
+        padding: 0.875rem;
+    }
+    
+    .giveaway-table-title {
+        font-size: 1rem;
+        margin-bottom: 0.875rem;
+    }
+    
     .giveaway-table {
         font-size: 0.8rem;
     }
@@ -1340,7 +1383,21 @@ body::-webkit-scrollbar-thumb:hover {
     }
     
     .giveaway-description {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
+    }
+    
+    .giveaway-tables-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .giveaway-table-wrapper {
+        padding: 0.75rem;
+    }
+    
+    .giveaway-table-title {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
     }
     
     .giveaway-table {
@@ -1357,7 +1414,7 @@ body::-webkit-scrollbar-thumb:hover {
     }
     
     .giveaway-note {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         margin-top: 0.75rem;
         padding-top: 0.75rem;
     }
