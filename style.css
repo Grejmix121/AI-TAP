@@ -453,6 +453,155 @@ body::-webkit-scrollbar-thumb:hover {
     white-space: nowrap;
 }
 
+/* Таймер обратного отсчета */
+.countdown-section {
+    margin-top: 1.5rem;
+    text-align: center;
+    animation: fadeInUp 1s ease-out 0.5s both;
+}
+
+.countdown-title {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.countdown-timer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.countdown-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(168, 85, 247, 0.15);
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    min-width: 70px;
+}
+
+.countdown-number {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.2;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.countdown-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.countdown-separator {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0 0.25rem;
+    opacity: 0.7;
+}
+
+.countdown-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+/* Секция розыгрыша */
+.giveaway-section {
+    margin-top: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
+    border-radius: 16px;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    animation: fadeInUp 1s ease-out 0.7s both;
+}
+
+.giveaway-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.giveaway-description {
+    font-size: 1rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.giveaway-rules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.giveaway-rule {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.rule-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.rule-list {
+    list-style: none;
+    padding: 0;
+}
+
+.rule-list li {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0.75rem;
+    padding-left: 1.5rem;
+    position: relative;
+    line-height: 1.5;
+}
+
+.rule-list li::before {
+    content: '🎁';
+    position: absolute;
+    left: 0;
+    font-size: 1rem;
+}
+
+.rule-list li strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.giveaway-note {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(168, 85, 247, 0.2);
+    font-style: italic;
+}
+
 /* Информация о проекте */
 .project-info {
     margin-bottom: 2.5rem;
@@ -979,6 +1128,35 @@ body::-webkit-scrollbar-thumb:hover {
     .progress-text {
         font-size: 1rem;
     }
+    
+    .countdown-item {
+        min-width: 60px;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .countdown-number {
+        font-size: 1.5rem;
+    }
+    
+    .countdown-label {
+        font-size: 0.7rem;
+    }
+    
+    .countdown-separator {
+        font-size: 1.2rem;
+    }
+    
+    .giveaway-rules {
+        grid-template-columns: 1fr;
+    }
+    
+    .giveaway-title {
+        font-size: 1.3rem;
+    }
+    
+    .giveaway-section {
+        padding: 1.5rem;
+    }
 
     .info-title {
         font-size: 1.2rem;
@@ -1090,6 +1268,57 @@ body::-webkit-scrollbar-thumb:hover {
 
     .feature-text {
         font-size: 0.9rem;
+    }
+    
+    .countdown-timer {
+        gap: 0.25rem;
+    }
+    
+    .countdown-item {
+        min-width: 50px;
+        padding: 0.5rem;
+    }
+    
+    .countdown-number {
+        font-size: 1.2rem;
+    }
+    
+    .countdown-label {
+        font-size: 0.65rem;
+    }
+    
+    .countdown-separator {
+        font-size: 1rem;
+        margin: 0 0.1rem;
+    }
+    
+    .countdown-title {
+        font-size: 0.9rem;
+    }
+    
+    .giveaway-section {
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .giveaway-title {
+        font-size: 1.1rem;
+    }
+    
+    .giveaway-description {
+        font-size: 0.9rem;
+    }
+    
+    .rule-title {
+        font-size: 1rem;
+    }
+    
+    .rule-list li {
+        font-size: 0.85rem;
+    }
+    
+    .giveaway-note {
+        font-size: 0.85rem;
     }
 }
 

@@ -102,18 +102,27 @@ async function initializeCounters() {
         wish: 132843,
         telegram: 32342,
         instagram: 16324,
-        tiktok: 20163
+        tiktok: 20163,
+        project_progress: Math.round(INITIAL_PROGRESS * 10) // Умножаем на 10 для хранения в Supabase
     };
     
     const client = getSupabaseClient();
     if (!client) {
         // Fallback на localStorage - устанавливаем начальные значения если их нет
         Object.keys(initialValues).forEach(key => {
-            const localKey = key === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + key;
-            const currentValue = parseFloat(localStorage.getItem(localKey) || '0');
-            // Устанавливаем начальное значение если текущее меньше начального
-            if (currentValue < initialValues[key]) {
-                localStorage.setItem(localKey, initialValues[key].toString());
+            if (key === 'project_progress') {
+                const currentValue = parseFloat(localStorage.getItem(PROGRESS_STORAGE_KEY) || '0');
+                // Для localStorage храним как обычное число (не умноженное на 10)
+                if (currentValue < INITIAL_PROGRESS) {
+                    localStorage.setItem(PROGRESS_STORAGE_KEY, INITIAL_PROGRESS.toString());
+                }
+            } else {
+                const localKey = key === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + key;
+                const currentValue = parseFloat(localStorage.getItem(localKey) || '0');
+                // Устанавливаем начальное значение если текущее меньше начального
+                if (currentValue < initialValues[key]) {
+                    localStorage.setItem(localKey, initialValues[key].toString());
+                }
             }
         });
         return;
@@ -130,6 +139,7 @@ async function initializeCounters() {
                 .maybeSingle();
             
             // Устанавливаем начальное значение если записи нет или счетчик меньше начального
+            // Для project_progress сравниваем как целые числа
             if (!existing || existing.count < initialCount) {
                 await client
                     .from('startzero_counters')
@@ -146,10 +156,18 @@ async function initializeCounters() {
         console.error('Ошибка инициализации счетчиков:', error);
         // Fallback на localStorage при ошибке
         Object.keys(initialValues).forEach(key => {
-            const localKey = key === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + key;
-            const currentValue = parseFloat(localStorage.getItem(localKey) || '0');
-            if (currentValue < initialValues[key]) {
-                localStorage.setItem(localKey, initialValues[key].toString());
+            if (key === 'project_progress') {
+                const currentValue = parseFloat(localStorage.getItem(PROGRESS_STORAGE_KEY) || '0');
+                // Для localStorage храним как обычное число (не умноженное на 10)
+                if (currentValue < INITIAL_PROGRESS) {
+                    localStorage.setItem(PROGRESS_STORAGE_KEY, INITIAL_PROGRESS.toString());
+                }
+            } else {
+                const localKey = key === 'wish' ? WISH_COUNT_KEY : SOCIAL_COUNT_PREFIX + key;
+                const currentValue = parseFloat(localStorage.getItem(localKey) || '0');
+                if (currentValue < initialValues[key]) {
+                    localStorage.setItem(localKey, initialValues[key].toString());
+                }
             }
         });
     }
@@ -497,6 +515,255 @@ scrollToTop();
     });
 })();
 
+// Константы для прогресса проекта
+const PROGRESS_STORAGE_KEY = 'reminko_project_progress';
+const PROGRESS_LAST_UPDATE_KEY = 'reminko_progress_last_update';
+const INITIAL_PROGRESS = 85; // Начальный прогресс в процентах
+const DAILY_PROGRESS_INCREASE = 0.3; // Увеличение каждый день в процентах
+const TARGET_PROGRESS = 100; // Целевой прогресс в процентах
+const UPDATE_HOUR_MSC = 4; // Время обновления
+const DAYS_TO_RELEASE = Math.ceil((TARGET_PROGRESS - INITIAL_PROGRESS) / DAILY_PROGRESS_INCREASE); // ~50 дней
+
+// Получить текущий прогресс из Supabase или localStorage
+async function getCurrentProgress() {
+    const client = getSupabaseClient();
+    
+    if (client) {
+        try {
+            const { data, error } = await client
+                .from('startzero_counters')
+                .select('count')
+                .eq('counter_type', 'project_progress')
+                .maybeSingle();
+            
+            if (!error && data) {
+                // В Supabase храним как целое число (умноженное на 10 для точности до 0.1%)
+                // Например, 85.3% хранится как 853, 85.6% как 856
+                return parseFloat(data.count) / 10 || INITIAL_PROGRESS;
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки прогресса:', error);
+        }
+    }
+    
+    // Fallback на localStorage
+    const storedProgress = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    return storedProgress ? parseFloat(storedProgress) : INITIAL_PROGRESS;
+}
+
+// Сохранить прогресс в Supabase и localStorage
+async function saveProgress(progress) {
+    const client = getSupabaseClient();
+    
+    // Ограничиваем прогресс до 100%
+    const clampedProgress = Math.min(progress, TARGET_PROGRESS);
+    
+    if (client) {
+        try {
+            // Сохраняем как целое число умноженное на 10 (для точности до 0.1%)
+            // Например, 85.3% сохраняется как 853, 85.6% как 856
+            await client
+                .from('startzero_counters')
+                .upsert({
+                    counter_type: 'project_progress',
+                    count: Math.round(clampedProgress * 10),
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'counter_type'
+                });
+        } catch (error) {
+            console.error('Ошибка сохранения прогресса:', error);
+        }
+    }
+    
+    // Сохраняем в localStorage как fallback (с точным значением)
+    localStorage.setItem(PROGRESS_STORAGE_KEY, clampedProgress.toString());
+}
+
+// Получить текущее время в МСК (UTC+3)
+function getMoscowTime() {
+    const now = new Date();
+    const moscowOffset = 3 * 60; // минуты
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const moscowTime = new Date(utcTime + (moscowOffset * 60000));
+    return moscowTime;
+}
+
+// Получить дату последнего обновления прогресса
+function getLastProgressUpdate() {
+    const lastUpdate = localStorage.getItem(PROGRESS_LAST_UPDATE_KEY);
+    return lastUpdate ? new Date(lastUpdate) : null;
+}
+
+// Сохранить дату последнего обновления прогресса
+function saveLastProgressUpdate() {
+    localStorage.setItem(PROGRESS_LAST_UPDATE_KEY, new Date().toISOString());
+}
+
+// Проверить, нужно ли обновить прогресс
+function shouldUpdateProgress() {
+    const lastUpdate = getLastProgressUpdate();
+    
+    if (!lastUpdate) {
+        // Если никогда не обновляли, проверяем текущее время
+        const moscowTime = getMoscowTime();
+        const currentHour = moscowTime.getHours();
+        return currentHour >= UPDATE_HOUR_MSC;
+    }
+    
+    const moscowTime = getMoscowTime();
+    const lastUpdateMSC = new Date(lastUpdate.getTime() + (3 * 60 * 60 * 1000));
+    
+    const lastUpdateDate = new Date(lastUpdateMSC.getFullYear(), lastUpdateMSC.getMonth(), lastUpdateMSC.getDate());
+    const lastUpdateHour = lastUpdateMSC.getHours();
+    
+    const currentDate = new Date(moscowTime.getFullYear(), moscowTime.getMonth(), moscowTime.getDate());
+    const currentHour = moscowTime.getHours();
+    
+    const daysSinceUpdate = Math.floor((currentDate - lastUpdateDate) / (1000 * 60 * 60 * 24));
+    
+    if (daysSinceUpdate > 0) {
+        return true;
+    }
+    
+    if (daysSinceUpdate === 0 && currentHour >= UPDATE_HOUR_MSC && lastUpdateHour < UPDATE_HOUR_MSC) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Увеличить прогресс на фиксированное значение каждый день
+function increaseProgress(currentProgress) {
+    // Увеличиваем на фиксированное значение каждый день
+    const newProgress = Math.min(currentProgress + DAILY_PROGRESS_INCREASE, TARGET_PROGRESS); // Не больше 100%
+    
+    return Math.round(newProgress * 10) / 10; // Округляем до 1 знака после запятой
+}
+
+// Вычислить дату релиза на основе текущего прогресса
+function calculateReleaseDate() {
+    const currentProgress = parseFloat(localStorage.getItem(PROGRESS_STORAGE_KEY)) || INITIAL_PROGRESS;
+    const remainingProgress = TARGET_PROGRESS - currentProgress;
+    const daysRemaining = Math.ceil(remainingProgress / DAILY_PROGRESS_INCREASE);
+    
+    // Устанавливаем дату релиза
+    const moscowTime = getMoscowTime();
+    const releaseDate = new Date(moscowTime);
+    releaseDate.setDate(releaseDate.getDate() + daysRemaining);
+    releaseDate.setHours(UPDATE_HOUR_MSC, 0, 0, 0);
+    
+    return releaseDate;
+}
+
+// Обновить таймер обратного отсчета
+function updateCountdownTimer() {
+    const releaseDate = calculateReleaseDate();
+    const moscowTime = getMoscowTime();
+    const timeLeft = releaseDate - moscowTime;
+    
+    if (timeLeft <= 0) {
+        // Если время вышло, показываем что релиз уже состоялся
+        const countdownElement = document.getElementById('countdownTimer');
+        if (countdownElement) {
+            countdownElement.innerHTML = '<span class="countdown-text">🎉 Релиз состоялся! 🎉</span>';
+        }
+        return;
+    }
+    
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+    
+    const countdownElement = document.getElementById('countdownTimer');
+    if (countdownElement) {
+        countdownElement.innerHTML = `
+            <div class="countdown-item">
+                <span class="countdown-number">${days}</span>
+                <span class="countdown-label">дней</span>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-item">
+                <span class="countdown-number">${hours.toString().padStart(2, '0')}</span>
+                <span class="countdown-label">часов</span>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-item">
+                <span class="countdown-number">${minutes.toString().padStart(2, '0')}</span>
+                <span class="countdown-label">минут</span>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-item">
+                <span class="countdown-number">${seconds.toString().padStart(2, '0')}</span>
+                <span class="countdown-label">секунд</span>
+            </div>
+        `;
+    }
+}
+
+// Обновить визуальное отображение прогресса
+function updateProgressDisplay(progress) {
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    
+    if (progressFill) {
+        progressFill.style.width = progress + '%';
+    }
+    
+    if (progressText) {
+        progressText.textContent = progress.toFixed(1) + '% готово';
+    }
+}
+
+// Загрузить и обновить прогресс проекта
+async function loadAndUpdateProgress() {
+    try {
+        let currentProgress = await getCurrentProgress();
+        
+        // Проверяем, нужно ли обновить прогресс
+        if (shouldUpdateProgress()) {
+            // Увеличиваем прогресс на 0.3%
+            currentProgress = increaseProgress(currentProgress);
+            
+            // Сохраняем новый прогресс
+            await saveProgress(currentProgress);
+            
+            // Сохраняем дату обновления
+            saveLastProgressUpdate();
+            
+            console.log('Прогресс проекта обновлен до:', currentProgress + '%');
+        }
+        
+        // Обновляем визуальное отображение
+        updateProgressDisplay(currentProgress);
+        
+        // Обновляем таймер обратного отсчета
+        updateCountdownTimer();
+        
+        // Запускаем обновление таймера каждую секунду
+        setInterval(updateCountdownTimer, 1000);
+        
+        // Проверяем обновление прогресса каждую минуту (на случай если пользователь оставил страницу открытой)
+        setInterval(async () => {
+            if (shouldUpdateProgress()) {
+                let progress = await getCurrentProgress();
+                progress = increaseProgress(progress);
+                await saveProgress(progress);
+                saveLastProgressUpdate();
+                updateProgressDisplay(progress);
+                console.log('Прогресс автоматически обновлен до:', progress + '%');
+            }
+        }, 60000); // Проверяем каждую минуту
+    } catch (error) {
+        console.error('Ошибка обновления прогресса:', error);
+        // При ошибке используем значение по умолчанию
+        updateProgressDisplay(INITIAL_PROGRESS);
+        updateCountdownTimer();
+        setInterval(updateCountdownTimer, 1000);
+    }
+}
+
 // Инициализация счетчиков
 document.addEventListener('DOMContentLoaded', async () => {
     // Прокручиваем страницу в начало сразу
@@ -516,6 +783,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Инициализируем начальные значения счетчиков
     await initializeCounters();
+    
+    // Загружаем и обновляем прогресс проекта
+    await loadAndUpdateProgress();
     
     // Скрываем загрузочный экран сразу после загрузки DOM
     // Используем requestAnimationFrame для гарантии что DOM готов
@@ -780,18 +1050,57 @@ function showWishNotification() {
     }, 3000);
 }
 
+// Получить реальное количество подписчиков Telegram канала
+// Функция загружается из отдельного файла Bot/telegram-bot.js
+async function getTelegramSubscribers() {
+    // Проверяем, загружен ли модуль Telegram бота
+    if (typeof window.getTelegramSubscribersFromBot !== 'undefined') {
+        return await window.getTelegramSubscribersFromBot(getSupabaseClient, loadCounterFromSupabase);
+    }
+    
+    // Fallback: если модуль не загружен, используем данные из Supabase
+    console.warn('Telegram Bot модуль не загружен. Используются данные из Supabase.');
+    return await loadCounterFromSupabase('telegram');
+}
+
 // Загрузить счетчики соцсетей
 async function loadSocialCounts() {
-    const socials = ['telegram', 'instagram', 'tiktok'];
+    // Для Telegram получаем реальное количество подписчиков
+    const telegramCount = await getTelegramSubscribers();
+    const telegramCountElement = document.getElementById('telegramCount');
+    if (telegramCountElement) {
+        animateNumber(telegramCountElement, 0, telegramCount, 800);
+    }
     
-    for (const social of socials) {
+    // Для остальных соцсетей пока используем счетчики из Supabase
+    const otherSocials = ['instagram', 'tiktok'];
+    for (const social of otherSocials) {
         const count = await loadCounterFromSupabase(social);
         const countElement = document.getElementById(social + 'Count');
         if (countElement) {
             animateNumber(countElement, 0, count, 800);
         }
     }
+    
+    // Обновляем счетчик Telegram каждые 5 минут
+    setInterval(async () => {
+        const newTelegramCount = await getTelegramSubscribers();
+        const telegramCountElement = document.getElementById('telegramCount');
+        if (telegramCountElement) {
+            const currentCount = parseInt(telegramCountElement.textContent.replace(/\./g, '')) || 0;
+            if (newTelegramCount !== currentCount) {
+                animateNumber(telegramCountElement, currentCount, newTelegramCount, 500);
+            }
+        }
+    }, 5 * 60 * 1000); // 5 минут
 }
+
+// Правильные URL для соцсетей (всегда используем эти значения)
+const SOCIAL_URLS = {
+    telegram: 'https://t.me/re_minko_anime',
+    instagram: 'https://www.instagram.com/re.minko?utm_source=qr&igsh=ZG1xMmN0YWVrNW96',
+    tiktok: 'https://www.tiktok.com/@re.minko?_r=1&_t=ZN-93f3tJJ2cdC'
+};
 
 // Обработка нажатия на кнопку соцсети
 async function handleSocialClick(event, socialName) {
@@ -799,45 +1108,40 @@ async function handleSocialClick(event, socialName) {
         event.preventDefault();
         event.stopPropagation();
         
-        // ВАЖНО: Проверяем онлайн в Supabase, чтобы каждый пользователь мог голосовать только один раз
-        const hasClicked = await hasUserClicked(socialName);
-        
-        if (!hasClicked) {
-            // Сначала сохраняем информацию о клике в Supabase (реальная онлайн база)
-            await saveUserClick(socialName);
-            
-            // Увеличиваем счетчик в Supabase (реальный онлайн счетчик)
-            const currentCount = await loadCounterFromSupabase(socialName);
-            const newCount = await incrementCounterInSupabase(socialName);
-            
-            // Обновляем UI
-            const countElement = document.getElementById(socialName + 'Count');
-            if (countElement) {
-                animateNumber(countElement, currentCount, newCount, 500);
-            }
-            
-            // Показываем уведомление
-            showSocialNotification(socialName);
-        }
-        
-        // Получаем URL из ссылки
-        let url = null;
-        const linkElement = event.currentTarget || event.target.closest('a');
-        
-        if (linkElement && linkElement.href) {
-            url = linkElement.href;
-        } else {
-            // Fallback: получаем URL из data-атрибута или по типу соцсети
-            const socialUrls = {
-                telegram: 'https://t.me/re_minko_anime',
-                instagram: 'https://www.instagram.com/re.minko?utm_source=qr&igsh=ZG1xMmN0YWVrNW96',
-                tiktok: 'https://www.tiktok.com/@re.minko?_r=1&_t=ZN-93f3tJJ2cdC'
-            };
-            url = socialUrls[socialName] || '#';
-        }
+        // ВАЖНО: Всегда используем правильный URL из константы, а не из элемента
+        const url = SOCIAL_URLS[socialName];
         
         if (!url || url === '#') {
+            console.error('Неизвестная соцсеть:', socialName);
             return; // Не можем перейти без URL
+        }
+        
+        // Для Telegram больше не увеличиваем счетчик при клике, так как используем реальные данные
+        // Для остальных соцсетей пока оставляем старую логику
+        if (socialName !== 'telegram') {
+            // ВАЖНО: Проверяем онлайн в Supabase, чтобы каждый пользователь мог голосовать только один раз
+            const hasClicked = await hasUserClicked(socialName);
+            
+            if (!hasClicked) {
+                // Сначала сохраняем информацию о клике в Supabase (реальная онлайн база)
+                await saveUserClick(socialName);
+                
+                // Увеличиваем счетчик в Supabase (реальный онлайн счетчик)
+                const currentCount = await loadCounterFromSupabase(socialName);
+                const newCount = await incrementCounterInSupabase(socialName);
+                
+                // Обновляем UI
+                const countElement = document.getElementById(socialName + 'Count');
+                if (countElement) {
+                    animateNumber(countElement, currentCount, newCount, 500);
+                }
+                
+                // Показываем уведомление
+                showSocialNotification(socialName);
+            }
+        } else {
+            // Для Telegram просто показываем уведомление о переходе
+            showSocialNotification(socialName);
         }
         
         // Показываем загрузочный экран
@@ -859,10 +1163,15 @@ async function handleSocialClick(event, socialName) {
             }
         }
         
-        // Переходим на ссылку через 3 секунды
+        // Переходим на правильную ссылку через 3 секунды
         setTimeout(() => {
             if (url && url !== '#') {
-                window.open(url, '_blank');
+                // Открываем ссылку в новой вкладке
+                const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                if (!newWindow) {
+                    // Если всплывающее окно заблокировано, открываем в той же вкладке
+                    window.location.href = url;
+                }
             }
             // Скрываем загрузочный экран через небольшую задержку
             setTimeout(() => {
@@ -871,6 +1180,11 @@ async function handleSocialClick(event, socialName) {
         }, 3000);
     } catch (error) {
         console.error('Ошибка при обработке клика соцсети:', error);
+        // В случае ошибки все равно открываем ссылку
+        const url = SOCIAL_URLS[socialName];
+        if (url && url !== '#') {
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
     }
 }
 

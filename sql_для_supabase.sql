@@ -55,7 +55,8 @@ VALUES
   ('wish', 132843),
   ('telegram', 32342),
   ('instagram', 16324),
-  ('tiktok', 20163)
+  ('tiktok', 20163),
+  ('project_progress', 85)
 ON CONFLICT (counter_type) DO UPDATE 
 SET count = CASE 
     WHEN startzero_counters.count < EXCLUDED.count THEN EXCLUDED.count
