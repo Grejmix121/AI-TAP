@@ -340,7 +340,7 @@
                                 <tr id="participation-row-100k">
                                     <td><strong>100к</strong></td>
                                     <td class="social-names" id="social-names-100k">—</td>
-                                    <td class="prize-info">1 VIP "Просмотр вместе"</td>
+                                    <td class="prize-info">1 VIP "Просмотр вместе"<br><small>Разыгрывается: —</small></td>
                                     <td>
                                         <button class="participate-btn" id="participate-btn-100k" onclick="handleParticipate('100k')" disabled>
                                             Участвовать
@@ -350,7 +350,7 @@
                                 <tr id="participation-row-200k">
                                     <td><strong>200к</strong></td>
                                     <td class="social-names" id="social-names-200k">—</td>
-                                    <td class="prize-info">"Просмотр вместе" + 1 неделя VIP<br><small>(если выиграл на 100к)</small></td>
+                                    <td class="prize-info">"Просмотр вместе" + 1 неделя VIP<br><small>Разыгрывается: —</small></td>
                                     <td>
                                         <button class="participate-btn" id="participate-btn-200k" onclick="handleParticipate('200k')" disabled>
                                             Участвовать
@@ -360,7 +360,7 @@
                                 <tr id="participation-row-300k">
                                     <td><strong>300к</strong></td>
                                     <td class="social-names" id="social-names-300k">—</td>
-                                    <td class="prize-info">+1 неделя VIP "Просмотр вместе"<br>+ VIP "ИИ Минко" на 1 неделю</td>
+                                    <td class="prize-info">+1 неделя VIP "Просмотр вместе"<br>+ VIP "ИИ Минко" на 1 неделю<br><small>Разыгрывается: —</small></td>
                                     <td>
                                         <button class="participate-btn" id="participate-btn-300k" onclick="handleParticipate('300k')" disabled>
                                             Участвовать
@@ -370,10 +370,57 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="participation-note">💡 Можно участвовать 3 раза: по одному разу на каждый уровень (100к, 200к, 300к)</p>
+                    <p class="participation-note">💡 Приз зависит от вашей истории выигрышей. Если выиграли все 3 уровня, следующие розыгрыши дают бонусные призы!</p>
                 </div>
                 
                 <p class="giveaway-note">💡 Подписывайтесь на все наши соцсети и участвуйте в розыгрыше! Чем больше подписчиков, тем больше призов!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для участия в розыгрыше -->
+    <div class="giveaway-modal" id="giveawayModal">
+        <div class="giveaway-modal-overlay" onclick="closeGiveawayModal()"></div>
+        <div class="giveaway-modal-content">
+            <button class="giveaway-modal-close" onclick="closeGiveawayModal()">&times;</button>
+            <div class="giveaway-modal-body" id="giveawayModalBody">
+                <!-- Форма участия -->
+                <div class="giveaway-form-step" id="giveawayFormStep">
+                    <h2 class="giveaway-modal-title">🎁 Участие в розыгрыше</h2>
+                    <p class="giveaway-modal-subtitle" id="giveawayModalSubtitle">Введите ваш email для участия</p>
+                    <form class="giveaway-form" id="giveawayForm" onsubmit="handleGiveawaySubmit(event)">
+                        <div class="giveaway-form-group">
+                            <label for="giveawayEmail">Email</label>
+                            <input 
+                                type="email" 
+                                id="giveawayEmail" 
+                                name="email" 
+                                placeholder="your@email.com" 
+                                required
+                                autocomplete="email"
+                            >
+                        </div>
+                        <button type="submit" class="giveaway-submit-btn" id="giveawaySubmitBtn">
+                            <span class="giveaway-submit-text">Изучить технику удача</span>
+                            <span class="giveaway-submit-emoji">✨</span>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Анимация розыгрыша -->
+                <div class="giveaway-animation-step" id="giveawayAnimationStep" style="display: none;">
+                    <div class="giveaway-animation-container">
+                        <div class="giveaway-spinner"></div>
+                        <div class="giveaway-animation-text" id="giveawayAnimationText">Розыгрыш...</div>
+                    </div>
+                </div>
+                
+                <!-- Результат розыгрыша -->
+                <div class="giveaway-result-step" id="giveawayResultStep" style="display: none;">
+                    <div class="giveaway-result-content" id="giveawayResultContent">
+                        <!-- Контент будет добавлен динамически -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>

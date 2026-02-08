@@ -2128,6 +2128,9 @@ async function updateParticipationTable() {
             socialNames300k.textContent = reached300k.length > 0 ? reached300k.join(', ') : '—';
         }
         
+        // Обновляем информацию о призах в таблице на основе количества соцсетей
+        await updatePrizeInfo(reached100k.length, reached200k.length, reached300k.length);
+        
         // Обновляем состояние кнопок
         await updateParticipationButtons('100k', reached100k.length > 0);
         await updateParticipationButtons('200k', reached200k.length > 0);
@@ -2138,22 +2141,102 @@ async function updateParticipationTable() {
     }
 }
 
+// Обновить информацию о призах в таблице
+async function updatePrizeInfo(reached100kCount, reached200kCount, reached300kCount) {
+    // Обновляем информацию о призах для каждого порога
+    const prize100k = document.querySelector('#participation-row-100k .prize-info');
+    const prize200k = document.querySelector('#participation-row-200k .prize-info');
+    const prize300k = document.querySelector('#participation-row-300k .prize-info');
+    
+    if (prize100k && reached100kCount > 0) {
+        const socialCount = Math.min(reached100kCount, 3);
+        const limit = GIVEAWAY_LIMITS['100k'][socialCount.toString()] || 0;
+        prize100k.innerHTML = `1 VIP "Просмотр вместе"<br><small>Разыгрывается: ${limit.toLocaleString('ru-RU')} VIP</small>`;
+    } else if (prize100k) {
+        prize100k.innerHTML = `1 VIP "Просмотр вместе"<br><small>Разыгрывается: —</small>`;
+    }
+    
+    if (prize200k && reached200kCount > 0) {
+        const socialCount = Math.min(reached200kCount, 3);
+        const limit = GIVEAWAY_LIMITS['200k'][socialCount.toString()] || 0;
+        prize200k.innerHTML = `"Просмотр вместе" + 1 неделя VIP<br><small>Разыгрывается: ${limit.toLocaleString('ru-RU')} VIP</small>`;
+    } else if (prize200k) {
+        prize200k.innerHTML = `"Просмотр вместе" + 1 неделя VIP<br><small>Разыгрывается: —</small>`;
+    }
+    
+    if (prize300k && reached300kCount > 0) {
+        const socialCount = Math.min(reached300kCount, 3);
+        const limit = GIVEAWAY_LIMITS['300k'][socialCount.toString()] || 0;
+        prize300k.innerHTML = `+1 неделя VIP "Просмотр вместе"<br>+ VIP "ИИ Минко" на 1 неделю<br><small>Разыгрывается: ${limit.toLocaleString('ru-RU')} VIP</small>`;
+    } else if (prize300k) {
+        prize300k.innerHTML = `+1 неделя VIP "Просмотр вместе"<br>+ VIP "ИИ Минко" на 1 неделю<br><small>Разыгрывается: —</small>`;
+    }
+}
+
+// Лимиты выигрышей для каждого порога (из таблиц на сайте)
+const GIVEAWAY_LIMITS = {
+    '100k': {
+        '1': 10000,   // 1 соцсеть
+        '2': 20000,   // 2 соцсети
+        '3': 30000    // 3 соцсети
+    },
+    '200k': {
+        '1': 20000,
+        '2': 40000,
+        '3': 60000
+    },
+    '300k': {
+        '1': 30000,
+        '2': 60000,
+        '3': 90000
+    }
+};
+
+// Текущий порог для модального окна
+let currentGiveawayThreshold = null;
+
 // Обновить состояние кнопки участия
 async function updateParticipationButtons(threshold, isAvailable) {
     const button = document.getElementById(`participate-btn-${threshold}`);
     if (!button) return;
     
-    // Проверяем, участвовал ли пользователь уже в этом розыгрыше
-    const hasParticipated = await checkParticipation(threshold);
-    
-    if (hasParticipated) {
+    const client = getSupabaseClient();
+    if (!client) {
         button.disabled = true;
-        button.classList.add('participated');
-        button.textContent = 'Участвовали';
+        return;
+    }
+    
+    // Проверяем, достигнут ли лимит выигрышей
+    const isLimitReached = await checkGiveawayLimit(threshold);
+    
+    if (isLimitReached) {
+        button.disabled = true;
+        button.classList.remove('participated');
+        button.textContent = 'Розыграно';
+        // Добавляем текст рядом с кнопкой
+        const row = document.getElementById(`participation-row-${threshold}`);
+        if (row) {
+            let limitText = row.querySelector('.limit-reached-text');
+            if (!limitText) {
+                limitText = document.createElement('div');
+                limitText.className = 'limit-reached-text';
+                limitText.style.cssText = 'font-size: 0.75rem; color: rgba(255, 255, 255, 0.6); margin-top: 0.5rem; font-style: italic;';
+                limitText.textContent = 'Ожидайте следующего розыгрыша';
+                button.parentElement.appendChild(limitText);
+            }
+        }
     } else if (isAvailable) {
         button.disabled = false;
         button.classList.remove('participated');
         button.textContent = 'Участвовать';
+        // Удаляем текст о лимите если был
+        const row = document.getElementById(`participation-row-${threshold}`);
+        if (row) {
+            const limitText = row.querySelector('.limit-reached-text');
+            if (limitText) {
+                limitText.remove();
+            }
+        }
     } else {
         button.disabled = true;
         button.classList.remove('participated');
@@ -2161,49 +2244,367 @@ async function updateParticipationButtons(threshold, isAvailable) {
     }
 }
 
-// Проверить, участвовал ли пользователь в розыгрыше на определенном пороге
-async function checkParticipation(threshold) {
-    const fingerprint = getUserFingerprint();
+// Проверить, достигнут ли лимит выигрышей для порога
+async function checkGiveawayLimit(threshold) {
     const client = getSupabaseClient();
-    
-    if (!client) {
-        return false;
-    }
+    if (!client) return true;
     
     try {
-        const { data, error } = await client
-            .from('startzero_giveaway_participants')
-            .select('id')
-            .eq('user_fingerprint', fingerprint)
-            .eq('threshold', threshold)
-            .maybeSingle();
+        // Определяем количество соцсетей, достигших порога
+        const { data: counters } = await client
+            .from('startzero_counters')
+            .select('counter_type, count')
+            .in('counter_type', ['telegram', 'instagram', 'tiktok']);
+        
+        if (!counters) return true;
+        
+        const thresholdValue = THRESHOLDS[threshold];
+        let reachedCount = 0;
+        
+        counters.forEach(counter => {
+            if (parseFloat(counter.count) >= thresholdValue) {
+                reachedCount++;
+            }
+        });
+        
+        if (reachedCount === 0) return true;
+        
+        const socialCountKey = Math.min(reachedCount, 3).toString();
+        const limit = GIVEAWAY_LIMITS[threshold]?.[socialCountKey] || 0;
+        
+        if (limit === 0) return true;
+        
+        // Подсчитываем количество выигрышей
+        const { count, error } = await client
+            .from('startzero_giveaway_winners')
+            .select('id', { count: 'exact', head: true })
+            .eq('threshold', threshold);
         
         if (error) {
-            console.error(`❌ Ошибка проверки участия для порога ${threshold}:`, error);
+            console.error(`❌ Ошибка проверки лимита для ${threshold}:`, error);
             return false;
         }
         
-        return !!data;
+        return (count || 0) >= limit;
     } catch (error) {
-        console.error(`❌ Ошибка проверки участия для порога ${threshold}:`, error);
+        console.error(`❌ Ошибка проверки лимита для ${threshold}:`, error);
         return false;
     }
 }
 
-// Обработать нажатие на кнопку "Участвовать"
-async function handleParticipate(threshold) {
-    const fingerprint = getUserFingerprint();
+// Получить историю выигрышей по email
+async function getEmailWinHistory(email) {
     const client = getSupabaseClient();
+    if (!client) return [];
     
-    if (!client) {
-        showNotification('❌ Ошибка подключения к базе данных', 'error');
+    try {
+        const { data, error } = await client
+            .from('startzero_giveaway_winners')
+            .select('threshold, prize_level')
+            .eq('email', email.toLowerCase().trim());
+        
+        if (error) {
+            console.error('❌ Ошибка получения истории выигрышей:', error);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('❌ Ошибка получения истории выигрышей:', error);
+        return [];
+    }
+}
+
+// Определить уровень приза на основе истории выигрышей
+function determinePrizeLevel(threshold, winHistory) {
+    const wonThresholds = winHistory.map(w => w.threshold);
+    const hasWon100k = wonThresholds.includes('100k');
+    const hasWon200k = wonThresholds.includes('200k');
+    const hasWon300k = wonThresholds.includes('300k');
+    
+    // Если выиграл все 3 уровня - бонусные призы
+    if (hasWon100k && hasWon200k && hasWon300k) {
+        return 'bonus';
+    }
+    
+    // Если выиграл 2 уровня (200k и 300k) - следующий как на 300k
+    if (hasWon200k && hasWon300k && !hasWon100k) {
+        return '300k';
+    }
+    
+    // Если выиграл только 200k - следующий как на 200k
+    if (hasWon200k && !hasWon100k && !hasWon300k) {
+        return '200k';
+    }
+    
+    // Если не выиграл на 100k, но участвует в 200k - приз как на 100k
+    if (threshold === '200k' && !hasWon100k) {
+        return '100k';
+    }
+    
+    // Если не выиграл на 100k и 200k, но участвует в 300k - приз как на 100k
+    if (threshold === '300k' && !hasWon100k && !hasWon200k) {
+        return '100k';
+    }
+    
+    // Если не выиграл на 100k, но выиграл на 200k, участвует в 300k - приз как на 200k
+    if (threshold === '300k' && !hasWon100k && hasWon200k) {
+        return '200k';
+    }
+    
+    // По умолчанию приз соответствует порогу
+    return threshold;
+}
+
+// Получить описание приза
+function getPrizeDescription(prizeLevel) {
+    const prizes = {
+        '100k': {
+            title: '1 VIP "Просмотр вместе"',
+            details: ['1 VIP подписка на услугу "Просмотр вместе"']
+        },
+        '200k': {
+            title: '"Просмотр вместе" + 1 неделя VIP',
+            details: ['VIP подписка "Просмотр вместе"', '+ 1 неделя VIP']
+        },
+        '300k': {
+            title: '+1 неделя VIP "Просмотр вместе" + VIP "ИИ Минко"',
+            details: ['+1 неделя VIP "Просмотр вместе"', '+ VIP "ИИ Минко" на 1 неделю']
+        },
+        'bonus': {
+            title: 'Бонусные призы',
+            details: ['+1 неделя VIP "Просмотр вместе"', '+1 неделя VIP "ИИ Минко"']
+        }
+    };
+    
+    return prizes[prizeLevel] || prizes['100k'];
+}
+
+// Открыть модальное окно для участия
+function openGiveawayModal(threshold) {
+    currentGiveawayThreshold = threshold;
+    const modal = document.getElementById('giveawayModal');
+    const formStep = document.getElementById('giveawayFormStep');
+    const animationStep = document.getElementById('giveawayAnimationStep');
+    const resultStep = document.getElementById('giveawayResultStep');
+    const emailInput = document.getElementById('giveawayEmail');
+    
+    if (modal) {
+        modal.classList.add('active');
+        formStep.style.display = 'block';
+        animationStep.style.display = 'none';
+        resultStep.style.display = 'none';
+        
+        // Очищаем форму
+        if (emailInput) {
+            emailInput.value = '';
+        }
+        
+        // Обновляем подзаголовок
+        const subtitle = document.getElementById('giveawayModalSubtitle');
+        if (subtitle) {
+            subtitle.textContent = `Введите ваш email для участия в розыгрыше ${threshold}`;
+        }
+    }
+}
+
+// Закрыть модальное окно
+function closeGiveawayModal() {
+    const modal = document.getElementById('giveawayModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+    currentGiveawayThreshold = null;
+}
+
+// Обработка закрытия модального окна по Escape
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById('giveawayModal');
+        if (modal && modal.classList.contains('active')) {
+            closeGiveawayModal();
+        }
+    }
+});
+
+// Обработать отправку формы участия
+async function handleGiveawaySubmit(event) {
+    event.preventDefault();
+    
+    const emailInput = document.getElementById('giveawayEmail');
+    if (!emailInput || !currentGiveawayThreshold) return;
+    
+    const email = emailInput.value.trim().toLowerCase();
+    
+    if (!email || !email.includes('@')) {
+        showNotification('❌ Введите корректный email', 'error');
         return;
     }
     
-    // Проверяем, не участвовал ли уже пользователь
-    const hasParticipated = await checkParticipation(threshold);
-    if (hasParticipated) {
-        showNotification('⚠️ Вы уже участвуете в этом розыгрыше!', 'warning');
+    // Показываем анимацию розыгрыша
+    const formStep = document.getElementById('giveawayFormStep');
+    const animationStep = document.getElementById('giveawayAnimationStep');
+    const resultStep = document.getElementById('giveawayResultStep');
+    
+    formStep.style.display = 'none';
+    animationStep.style.display = 'block';
+    resultStep.style.display = 'none';
+    
+    // Симулируем розыгрыш (2-3 секунды)
+    await new Promise(resolve => setTimeout(resolve, 2500));
+    
+    // Проводим розыгрыш
+    const result = await conductGiveaway(currentGiveawayThreshold, email);
+    
+    // Показываем результат
+    showGiveawayResult(result, email);
+}
+
+// Провести розыгрыш
+async function conductGiveaway(threshold, email) {
+    const client = getSupabaseClient();
+    if (!client) {
+        return { won: false, error: 'Ошибка подключения к базе данных' };
+    }
+    
+    try {
+        // Проверяем лимит
+        const isLimitReached = await checkGiveawayLimit(threshold);
+        if (isLimitReached) {
+            return { won: false, error: 'Лимит выигрышей достигнут' };
+        }
+        
+        // Получаем историю выигрышей email
+        const winHistory = await getEmailWinHistory(email);
+        
+        // Определяем уровень приза
+        const prizeLevel = determinePrizeLevel(threshold, winHistory);
+        
+        // Определяем количество соцсетей для расчета вероятности
+        const { data: counters } = await client
+            .from('startzero_counters')
+            .select('counter_type, count')
+            .in('counter_type', ['telegram', 'instagram', 'tiktok']);
+        
+        let reachedCount = 0;
+        const thresholdValue = THRESHOLDS[threshold];
+        
+        if (counters) {
+            counters.forEach(counter => {
+                if (parseFloat(counter.count) >= thresholdValue) {
+                    reachedCount++;
+                }
+            });
+        }
+        
+        const socialCountKey = Math.min(reachedCount, 3).toString();
+        const limit = GIVEAWAY_LIMITS[threshold]?.[socialCountKey] || 0;
+        
+        // Подсчитываем текущее количество выигрышей
+        const { count: currentWins } = await client
+            .from('startzero_giveaway_winners')
+            .select('id', { count: 'exact', head: true })
+            .eq('threshold', threshold);
+        
+        const remainingWins = limit - (currentWins || 0);
+        
+        // Вероятность выигрыша зависит от оставшихся призов
+        // Чем меньше осталось призов, тем меньше вероятность
+        const winProbability = Math.min(remainingWins / limit, 0.5); // Максимум 50% вероятность
+        
+        // Проводим розыгрыш
+        const won = Math.random() < winProbability;
+        
+        if (won) {
+            // Сохраняем выигрыш в базу данных
+            const prizeDescription = getPrizeDescription(prizeLevel);
+            const { error: insertError } = await client
+                .from('startzero_giveaway_winners')
+                .insert({
+                    email: email,
+                    threshold: threshold,
+                    prize_level: prizeLevel,
+                    prize_details: {
+                        title: prizeDescription.title,
+                        details: prizeDescription.details
+                    }
+                });
+            
+            if (insertError) {
+                console.error('❌ Ошибка сохранения выигрыша:', insertError);
+                return { won: false, error: 'Ошибка сохранения выигрыша' };
+            }
+            
+            // TODO: Здесь нужно будет привязать VIP к email через API или другую систему
+            // Пока просто возвращаем успех
+            
+            return {
+                won: true,
+                prizeLevel: prizeLevel,
+                prizeDescription: prizeDescription
+            };
+        } else {
+            return { won: false };
+        }
+    } catch (error) {
+        console.error('❌ Ошибка проведения розыгрыша:', error);
+        return { won: false, error: 'Произошла ошибка при проведении розыгрыша' };
+    }
+}
+
+// Показать результат розыгрыша
+function showGiveawayResult(result, email) {
+    const animationStep = document.getElementById('giveawayAnimationStep');
+    const resultStep = document.getElementById('giveawayResultStep');
+    const resultContent = document.getElementById('giveawayResultContent');
+    
+    animationStep.style.display = 'none';
+    resultStep.style.display = 'block';
+    
+    if (!resultContent) return;
+    
+    if (result.won) {
+        const prize = result.prizeDescription;
+        resultContent.innerHTML = `
+            <div class="giveaway-result-icon">🎉</div>
+            <h2 class="giveaway-result-title win">Поздравляем! Вы выиграли!</h2>
+            <p class="giveaway-result-message">Ваш приз будет привязан к указанному email</p>
+            <div class="giveaway-result-prize">
+                <div class="giveaway-result-prize-title">Ваш приз:</div>
+                <ul class="giveaway-result-prize-list">
+                    ${prize.details.map(detail => `<li>${detail}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="giveaway-result-email">Email: ${email}</div>
+            <button class="giveaway-result-button" onclick="closeGiveawayModal()">Закрыть</button>
+        `;
+    } else {
+        let message = 'К сожалению, в этот раз вам не повезло.';
+        if (result.error) {
+            message = result.error;
+        } else {
+            message += ' Но не расстраивайтесь! Вы можете попробовать выиграть в следующем розыгрыше!';
+        }
+        
+        resultContent.innerHTML = `
+            <div class="giveaway-result-icon">😔</div>
+            <h2 class="giveaway-result-title lose">Не повезло</h2>
+            <p class="giveaway-result-message">${message}</p>
+            <button class="giveaway-result-button" onclick="closeGiveawayModal()">Понятно</button>
+        `;
+    }
+    
+    // Обновляем состояние кнопок после розыгрыша
+    setTimeout(() => {
+        updateParticipationTable();
+    }, 1000);
+}
+
+// Обработать нажатие на кнопку "Участвовать"
+async function handleParticipate(threshold) {
+    const client = getSupabaseClient();
+    if (!client) {
+        showNotification('❌ Ошибка подключения к базе данных', 'error');
         return;
     }
     
@@ -2234,34 +2635,21 @@ async function handleParticipate(threshold) {
         return;
     }
     
-    // Добавляем участие в базу данных
-    try {
-        const { error } = await client
-            .from('startzero_giveaway_participants')
-            .insert({
-                user_fingerprint: fingerprint,
-                threshold: threshold,
-                participated_at: new Date().toISOString()
-            });
-        
-        if (error) {
-            console.error('❌ Ошибка добавления участия:', error);
-            showNotification('❌ Ошибка регистрации участия', 'error');
-            return;
-        }
-        
-        // Обновляем состояние кнопки
-        await updateParticipationButtons(threshold, true);
-        
-        showNotification(`✅ Вы успешно зарегистрированы на розыгрыш ${threshold}!`, 'success');
-        
-    } catch (error) {
-        console.error('❌ Ошибка обработки участия:', error);
-        showNotification('❌ Произошла ошибка при регистрации', 'error');
+    // Проверяем лимит
+    const isLimitReached = await checkGiveawayLimit(threshold);
+    if (isLimitReached) {
+        showNotification('⚠️ Розыгрыш завершен. Ожидайте следующего!', 'warning');
+        return;
     }
+    
+    // Открываем модальное окно
+    openGiveawayModal(threshold);
 }
 
 // Явно экспортируем функции в глобальную область видимости для доступа из HTML
 window.handleWishClick = handleWishClick;
 window.handleSocialClick = handleSocialClick;
 window.handleParticipate = handleParticipate;
+window.openGiveawayModal = openGiveawayModal;
+window.closeGiveawayModal = closeGiveawayModal;
+window.handleGiveawaySubmit = handleGiveawaySubmit;
