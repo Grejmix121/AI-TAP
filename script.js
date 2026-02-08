@@ -2024,6 +2024,22 @@ async function handleSocialClick(event, socialName) {
 }
 
 // Показать уведомление для соцсети
+// Универсальное уведомление
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = 'wish-notification';
+    if (type === 'error') notification.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
+    else if (type === 'warning') notification.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
+    else if (type === 'success') notification.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+    notification.innerHTML = message;
+    document.body.appendChild(notification);
+    setTimeout(() => { notification.classList.add('show'); }, 10);
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => { if (document.body.contains(notification)) document.body.removeChild(notification); }, 300);
+    }, 4000);
+}
+
 function showSocialNotification(socialName) {
     const socialNames = {
         telegram: 'Telegram',
@@ -2508,35 +2524,68 @@ function showGiveawayResult(result, email) {
     const losses = result.results.filter(r => !r.won);
     
     if (wins.length > 0) {
-        let prizeHTML = '';
+        // Определяем какие картинки показать по типу приза
+        let prizeCardsHTML = '';
         wins.forEach(w => {
-            const imgSrc = w.prize?.img || (w.roll === 'prosmotr' ? 'Prosmotr vmeste.jpg' : 'AI ICON.jpg');
-            const prizeText = w.prize?.title || w.prize || (w.roll === 'prosmotr' ? 'VIP "Просмотр вместе"' : 'VIP "ИИ Минко"');
-            prizeHTML += `
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin: 0.5rem 0;">
-                    <img src="${imgSrc}" class="giveaway-result-prize-img" alt="Приз">
-                    <span style="color: #10b981; font-weight: 600;">${prizeText}</span>
+            // Определяем изображение и текст на основе типа приза
+            let imgSrc, prizeTitle, prizeDesc;
+            const prizeType = w.prize?.type || '';
+            
+            if (prizeType === 'prosmotr' || (typeof w.prize === 'string' && w.prize.includes('Просмотр'))) {
+                imgSrc = 'Prosmotr vmeste.jpg';
+                prizeTitle = 'VIP "Просмотр вместе"';
+                prizeDesc = w.prize?.details ? w.prize.details.join(', ') : (typeof w.prize === 'string' ? w.prize : 'VIP подписка "Просмотр вместе"');
+            } else if (prizeType === 'ai' || (typeof w.prize === 'string' && w.prize.includes('ИИ'))) {
+                imgSrc = 'AI ICON.jpg';
+                prizeTitle = 'VIP "ИИ Минко"';
+                prizeDesc = w.prize?.details ? w.prize.details.join(', ') : (typeof w.prize === 'string' ? w.prize : 'VIP подписка "ИИ Минко"');
+            } else if (prizeType === 'both_week') {
+                // Два приза — рисуем обе картинки
+                prizeCardsHTML += `
+                    <div class="giveaway-win-card">
+                        <img src="Prosmotr vmeste.jpg" alt="VIP Просмотр" class="giveaway-win-img">
+                        <div class="giveaway-win-text">
+                            <span class="giveaway-win-name">+1 нед. VIP "Просмотр вместе"</span>
+                        </div>
+                    </div>
+                    <div class="giveaway-win-card">
+                        <img src="AI ICON.jpg" alt="VIP ИИ Минко" class="giveaway-win-img">
+                        <div class="giveaway-win-text">
+                            <span class="giveaway-win-name">+1 нед. VIP "ИИ Минко"</span>
+                        </div>
+                    </div>`;
+                return; // Уже отрисовали
+            } else {
+                imgSrc = w.roll === 'prosmotr' ? 'Prosmotr vmeste.jpg' : 'AI ICON.jpg';
+                prizeTitle = w.prize?.title || (typeof w.prize === 'string' ? w.prize : 'VIP подписка');
+                prizeDesc = '';
+            }
+            
+            prizeCardsHTML += `
+                <div class="giveaway-win-card">
+                    <img src="${imgSrc}" alt="${prizeTitle}" class="giveaway-win-img">
+                    <div class="giveaway-win-text">
+                        <span class="giveaway-win-name">${prizeTitle}</span>
+                        ${prizeDesc && prizeDesc !== prizeTitle ? `<span class="giveaway-win-desc">${prizeDesc}</span>` : ''}
+                    </div>
                 </div>`;
         });
         
         const lossText = losses.length > 0
-            ? `<p style="color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 0.75rem;">
-                ${losses.map(l => l.roll === 'prosmotr' ? 'VIP "Просмотр вместе" — не выиграно' : 'VIP "ИИ Минко" — не выиграно').join('<br>')}</p>`
+            ? `<p class="giveaway-result-losses">
+                ${losses.map(l => l.roll === 'prosmotr' ? '❌ VIP "Просмотр вместе" — не выиграно' : '❌ VIP "ИИ Минко" — не выиграно').join('<br>')}</p>`
             : '';
         
         resultContent.innerHTML = `
             <div class="giveaway-result-icon">🎉</div>
             <h2 class="giveaway-result-title win">Поздравляем!</h2>
             <p class="giveaway-result-message">Выигрыш зарегистрирован. Администратор свяжется для выдачи приза.</p>
-            <div class="giveaway-result-prize">
-                <div class="giveaway-result-prize-title">Ваши призы:</div>
-                ${prizeHTML}
-                ${lossText}
+            <div class="giveaway-win-cards">
+                ${prizeCardsHTML}
             </div>
+            ${lossText}
             <div class="giveaway-result-email">Email: ${email}</div>
-            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin-top: 1rem; font-style: italic;">
-                💡 Приз будет выдан администратором
-            </p>
+            <p class="giveaway-result-admin-note">💡 Приз будет выдан администратором</p>
             <button class="giveaway-result-button" onclick="closeGiveawayModal()">Закрыть</button>
         `;
     } else {
