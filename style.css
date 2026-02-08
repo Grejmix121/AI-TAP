@@ -657,6 +657,99 @@ body::-webkit-scrollbar-thumb:hover {
     font-style: italic;
 }
 
+/* Таблица участия в розыгрыше */
+.giveaway-participation-wrapper {
+    margin-top: 2rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(236, 72, 153, 0.25));
+    border: 2px solid rgba(168, 85, 247, 0.4);
+}
+
+.giveaway-participation-table {
+    font-size: 0.9rem;
+}
+
+.giveaway-participation-table th {
+    font-size: 0.9rem;
+    padding: 0.85rem 0.5rem;
+}
+
+.giveaway-participation-table td {
+    padding: 1rem 0.5rem;
+    vertical-align: middle;
+}
+
+.giveaway-participation-table .social-names {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.giveaway-participation-table .prize-info {
+    text-align: left;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.giveaway-participation-table .prize-info small {
+    display: block;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+    font-style: italic;
+}
+
+.participate-btn {
+    background: linear-gradient(135deg, var(--primary-color), #ec4899);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.participate-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+    background: linear-gradient(135deg, #9333ea, #db2777);
+}
+
+.participate-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.participate-btn:disabled {
+    background: rgba(168, 85, 247, 0.2);
+    color: rgba(255, 255, 255, 0.5);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.participate-btn.participated {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    cursor: default;
+}
+
+.participate-btn.participated::after {
+    content: " ✓";
+}
+
+.participation-note {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(168, 85, 247, 0.2);
+    font-style: italic;
+}
+
 /* Информация о проекте */
 .project-info {
     margin-bottom: 2.5rem;
@@ -1269,6 +1362,25 @@ body::-webkit-scrollbar-thumb:hover {
         margin-top: 0.75rem;
         padding-top: 0.75rem;
     }
+    
+    .giveaway-participation-table {
+        font-size: 0.75rem;
+    }
+    
+    .giveaway-participation-table th,
+    .giveaway-participation-table td {
+        padding: 0.6rem 0.3rem;
+        font-size: 0.7rem;
+    }
+    
+    .participate-btn {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.75rem;
+    }
+    
+    .participation-note {
+        font-size: 0.7rem;
+    }
 
     .info-title {
         font-size: 1.2rem;
@@ -1462,6 +1574,33 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 0.75rem;
         margin-top: 0.75rem;
         padding-top: 0.75rem;
+    }
+    
+    .giveaway-participation-table {
+        font-size: 0.7rem;
+    }
+    
+    .giveaway-participation-table th,
+    .giveaway-participation-table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.65rem;
+    }
+    
+    .giveaway-participation-table .prize-info {
+        font-size: 0.65rem;
+    }
+    
+    .giveaway-participation-table .prize-info small {
+        font-size: 0.6rem;
+    }
+    
+    .participate-btn {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
+    }
+    
+    .participation-note {
+        font-size: 0.65rem;
     }
 }
 

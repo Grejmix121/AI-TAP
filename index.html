@@ -323,6 +323,56 @@
                     </div>
                 </div>
                 
+                <!-- Таблица участия в розыгрыше -->
+                <div class="giveaway-table-wrapper giveaway-participation-wrapper">
+                    <h3 class="giveaway-table-title">🎯 Участие в розыгрыше</h3>
+                    <div class="giveaway-table-container">
+                        <table class="giveaway-table giveaway-participation-table">
+                            <thead>
+                                <tr>
+                                    <th>Порог</th>
+                                    <th>Соцсети</th>
+                                    <th>Приз</th>
+                                    <th>Действие</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr id="participation-row-100k">
+                                    <td><strong>100к</strong></td>
+                                    <td class="social-names" id="social-names-100k">—</td>
+                                    <td class="prize-info">1 VIP "Просмотр вместе"</td>
+                                    <td>
+                                        <button class="participate-btn" id="participate-btn-100k" onclick="handleParticipate('100k')" disabled>
+                                            Участвовать
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="participation-row-200k">
+                                    <td><strong>200к</strong></td>
+                                    <td class="social-names" id="social-names-200k">—</td>
+                                    <td class="prize-info">"Просмотр вместе" + 1 неделя VIP<br><small>(если выиграл на 100к)</small></td>
+                                    <td>
+                                        <button class="participate-btn" id="participate-btn-200k" onclick="handleParticipate('200k')" disabled>
+                                            Участвовать
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr id="participation-row-300k">
+                                    <td><strong>300к</strong></td>
+                                    <td class="social-names" id="social-names-300k">—</td>
+                                    <td class="prize-info">+1 неделя VIP "Просмотр вместе"<br>+ VIP "ИИ Минко" на 1 неделю</td>
+                                    <td>
+                                        <button class="participate-btn" id="participate-btn-300k" onclick="handleParticipate('300k')" disabled>
+                                            Участвовать
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="participation-note">💡 Можно участвовать 3 раза: по одному разу на каждый уровень (100к, 200к, 300к)</p>
+                </div>
+                
                 <p class="giveaway-note">💡 Подписывайтесь на все наши соцсети и участвуйте в розыгрыше! Чем больше подписчиков, тем больше призов!</p>
             </div>
         </div>

@@ -985,6 +985,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Загружаем счетчики соцсетей (включая Telegram)
     await loadSocialCounts();
     
+    // Обновляем таблицу участия в розыгрыше
+    await updateParticipationTable();
+    
     // Принудительно обновляем Telegram счетчик еще раз через 2 секунды
     // чтобы убедиться что загружены актуальные данные
     setTimeout(async () => {
@@ -1664,6 +1667,9 @@ async function loadSocialCounts() {
     // Для TikTok получаем реальное количество подписчиков из Supabase (аналогично Telegram)
     await loadTikTokCount();
     
+    // Обновляем таблицу участия в розыгрыше после загрузки всех счетчиков
+    await updateParticipationTable();
+    
     // Обновляем счетчики Telegram и Instagram каждую минуту (бот обновляет в Supabase каждые 5 минут)
     // Это нужно чтобы показывать актуальные данные, которые бот уже сохранил
     
@@ -1743,6 +1749,8 @@ async function loadSocialCounts() {
                     telegramCountElement.classList.add('counting');
                 }
             }
+            // Обновляем таблицу участия при изменении счетчиков
+            await updateParticipationTable();
         } catch (error) {
             console.error('Ошибка обновления Telegram счетчика:', error);
         }
@@ -1809,6 +1817,8 @@ async function loadSocialCounts() {
                     instagramCountElement.classList.add('counting');
                 }
             }
+            // Обновляем таблицу участия при изменении счетчиков
+            await updateParticipationTable();
         } catch (error) {
             console.error('Ошибка обновления Instagram счетчика:', error);
         }
@@ -1875,6 +1885,8 @@ async function loadSocialCounts() {
                     tiktokCountElement.classList.add('counting');
                 }
             }
+            // Обновляем таблицу участия при изменении счетчиков
+            await updateParticipationTable();
         } catch (error) {
             console.error('Ошибка обновления TikTok счетчика:', error);
         }
@@ -2038,6 +2050,218 @@ function showSocialNotification(socialName) {
     }, 3000);
 }
 
+// ==================== ФУНКЦИИ ДЛЯ УЧАСТИЯ В РОЗЫГРЫШЕ ====================
+
+// Названия соц сетей
+const SOCIAL_NAMES = {
+    telegram: 'Telegram',
+    instagram: 'Instagram',
+    tiktok: 'TikTok'
+};
+
+// Пороги подписчиков
+const THRESHOLDS = {
+    '100k': 100000,
+    '200k': 200000,
+    '300k': 300000
+};
+
+// Обновить таблицу участия в розыгрыше на основе текущих счетчиков
+async function updateParticipationTable() {
+    const client = getSupabaseClient();
+    if (!client) {
+        console.error('❌ Supabase клиент не инициализирован для обновления таблицы участия');
+        return;
+    }
+    
+    try {
+        // Получаем текущие счетчики всех соц сетей
+        const { data: counters, error } = await client
+            .from('startzero_counters')
+            .select('counter_type, count')
+            .in('counter_type', ['telegram', 'instagram', 'tiktok']);
+        
+        if (error) {
+            console.error('❌ Ошибка загрузки счетчиков для таблицы участия:', error);
+            return;
+        }
+        
+        // Создаем объект с текущими значениями
+        const socialCounts = {};
+        if (counters) {
+            counters.forEach(counter => {
+                socialCounts[counter.counter_type] = parseFloat(counter.count) || 0;
+            });
+        }
+        
+        // Определяем, какие соц сети достигли каждого порога
+        const reached100k = [];
+        const reached200k = [];
+        const reached300k = [];
+        
+        Object.keys(socialCounts).forEach(social => {
+            const count = socialCounts[social];
+            if (count >= THRESHOLDS['300k']) {
+                reached300k.push(SOCIAL_NAMES[social]);
+                reached200k.push(SOCIAL_NAMES[social]);
+                reached100k.push(SOCIAL_NAMES[social]);
+            } else if (count >= THRESHOLDS['200k']) {
+                reached200k.push(SOCIAL_NAMES[social]);
+                reached100k.push(SOCIAL_NAMES[social]);
+            } else if (count >= THRESHOLDS['100k']) {
+                reached100k.push(SOCIAL_NAMES[social]);
+            }
+        });
+        
+        // Обновляем названия соц сетей в таблице
+        const socialNames100k = document.getElementById('social-names-100k');
+        const socialNames200k = document.getElementById('social-names-200k');
+        const socialNames300k = document.getElementById('social-names-300k');
+        
+        if (socialNames100k) {
+            socialNames100k.textContent = reached100k.length > 0 ? reached100k.join(', ') : '—';
+        }
+        if (socialNames200k) {
+            socialNames200k.textContent = reached200k.length > 0 ? reached200k.join(', ') : '—';
+        }
+        if (socialNames300k) {
+            socialNames300k.textContent = reached300k.length > 0 ? reached300k.join(', ') : '—';
+        }
+        
+        // Обновляем состояние кнопок
+        await updateParticipationButtons('100k', reached100k.length > 0);
+        await updateParticipationButtons('200k', reached200k.length > 0);
+        await updateParticipationButtons('300k', reached300k.length > 0);
+        
+    } catch (error) {
+        console.error('❌ Ошибка обновления таблицы участия:', error);
+    }
+}
+
+// Обновить состояние кнопки участия
+async function updateParticipationButtons(threshold, isAvailable) {
+    const button = document.getElementById(`participate-btn-${threshold}`);
+    if (!button) return;
+    
+    // Проверяем, участвовал ли пользователь уже в этом розыгрыше
+    const hasParticipated = await checkParticipation(threshold);
+    
+    if (hasParticipated) {
+        button.disabled = true;
+        button.classList.add('participated');
+        button.textContent = 'Участвовали';
+    } else if (isAvailable) {
+        button.disabled = false;
+        button.classList.remove('participated');
+        button.textContent = 'Участвовать';
+    } else {
+        button.disabled = true;
+        button.classList.remove('participated');
+        button.textContent = 'Участвовать';
+    }
+}
+
+// Проверить, участвовал ли пользователь в розыгрыше на определенном пороге
+async function checkParticipation(threshold) {
+    const fingerprint = getUserFingerprint();
+    const client = getSupabaseClient();
+    
+    if (!client) {
+        return false;
+    }
+    
+    try {
+        const { data, error } = await client
+            .from('startzero_giveaway_participants')
+            .select('id')
+            .eq('user_fingerprint', fingerprint)
+            .eq('threshold', threshold)
+            .maybeSingle();
+        
+        if (error) {
+            console.error(`❌ Ошибка проверки участия для порога ${threshold}:`, error);
+            return false;
+        }
+        
+        return !!data;
+    } catch (error) {
+        console.error(`❌ Ошибка проверки участия для порога ${threshold}:`, error);
+        return false;
+    }
+}
+
+// Обработать нажатие на кнопку "Участвовать"
+async function handleParticipate(threshold) {
+    const fingerprint = getUserFingerprint();
+    const client = getSupabaseClient();
+    
+    if (!client) {
+        showNotification('❌ Ошибка подключения к базе данных', 'error');
+        return;
+    }
+    
+    // Проверяем, не участвовал ли уже пользователь
+    const hasParticipated = await checkParticipation(threshold);
+    if (hasParticipated) {
+        showNotification('⚠️ Вы уже участвуете в этом розыгрыше!', 'warning');
+        return;
+    }
+    
+    // Проверяем, достигнут ли порог
+    const { data: counters, error: countersError } = await client
+        .from('startzero_counters')
+        .select('counter_type, count')
+        .in('counter_type', ['telegram', 'instagram', 'tiktok']);
+    
+    if (countersError) {
+        showNotification('❌ Ошибка проверки порога подписчиков', 'error');
+        return;
+    }
+    
+    const thresholdValue = THRESHOLDS[threshold];
+    let thresholdReached = false;
+    
+    if (counters) {
+        counters.forEach(counter => {
+            if (parseFloat(counter.count) >= thresholdValue) {
+                thresholdReached = true;
+            }
+        });
+    }
+    
+    if (!thresholdReached) {
+        showNotification('⚠️ Порог подписчиков еще не достигнут', 'warning');
+        return;
+    }
+    
+    // Добавляем участие в базу данных
+    try {
+        const { error } = await client
+            .from('startzero_giveaway_participants')
+            .insert({
+                user_fingerprint: fingerprint,
+                threshold: threshold,
+                participated_at: new Date().toISOString()
+            });
+        
+        if (error) {
+            console.error('❌ Ошибка добавления участия:', error);
+            showNotification('❌ Ошибка регистрации участия', 'error');
+            return;
+        }
+        
+        // Обновляем состояние кнопки
+        await updateParticipationButtons(threshold, true);
+        
+        showNotification(`✅ Вы успешно зарегистрированы на розыгрыш ${threshold}!`, 'success');
+        
+    } catch (error) {
+        console.error('❌ Ошибка обработки участия:', error);
+        showNotification('❌ Произошла ошибка при регистрации', 'error');
+    }
+}
+
 // Явно экспортируем функции в глобальную область видимости для доступа из HTML
 window.handleWishClick = handleWishClick;
 window.handleSocialClick = handleSocialClick;
+window.handleParticipate = handleParticipate;
