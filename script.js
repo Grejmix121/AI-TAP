@@ -743,10 +743,29 @@ function increaseProgress(currentProgress) {
     return Math.round(newProgress * 10) / 10; // Округляем до 1 знака после запятой
 }
 
+// Кеш для даты релиза и прогресса
+let cachedReleaseDate = null;
+let cachedProgress = null;
+let releaseDateCacheTime = 0;
+const RELEASE_DATE_CACHE_DURATION = 60 * 1000; // Кешируем на 1 минуту
+
 // Вычислить дату релиза на основе текущего прогресса
 async function calculateReleaseDate() {
+    const now = Date.now();
+    
+    // Проверяем кеш - если прогресс не изменился и прошло меньше минуты, используем кеш
+    if (cachedReleaseDate && cachedProgress !== null && (now - releaseDateCacheTime) < RELEASE_DATE_CACHE_DURATION) {
+        return cachedReleaseDate;
+    }
+    
     // ВАЖНО: Используем актуальное значение из базы, а не localStorage
     const currentProgress = await getCurrentProgress();
+    
+    // Если прогресс не изменился и кеш еще актуален - используем кеш
+    if (cachedProgress === currentProgress && cachedReleaseDate && (now - releaseDateCacheTime) < RELEASE_DATE_CACHE_DURATION) {
+        return cachedReleaseDate;
+    }
+    
     const remainingProgress = TARGET_PROGRESS - currentProgress;
     const daysRemaining = Math.ceil(remainingProgress / DAILY_PROGRESS_INCREASE);
     
@@ -756,6 +775,11 @@ async function calculateReleaseDate() {
     releaseDate.setDate(releaseDate.getDate() + daysRemaining);
     releaseDate.setHours(UPDATE_HOUR_MSC, 0, 0, 0);
     
+    // Обновляем кеш
+    cachedReleaseDate = releaseDate;
+    cachedProgress = currentProgress;
+    releaseDateCacheTime = now;
+    
     console.log(`📅 Расчет даты релиза: текущий прогресс ${currentProgress.toFixed(1)}%, осталось ${remainingProgress.toFixed(1)}%, дней до релиза: ${daysRemaining}`);
     
     return releaseDate;
@@ -764,6 +788,7 @@ async function calculateReleaseDate() {
 // Обновить таймер обратного отсчета
 async function updateCountdownTimer() {
     // ВАЖНО: Используем актуальное значение прогресса из базы для расчета
+    // Функция calculateReleaseDate теперь кеширует результат на 1 минуту
     const releaseDate = await calculateReleaseDate();
     const moscowTime = getMoscowTime();
     const timeLeft = releaseDate - moscowTime;
@@ -862,6 +887,10 @@ async function loadAndUpdateProgress() {
             
             // Обновляем визуальное отображение с новым значением
             updateProgressDisplay(newProgress);
+            
+            // Сбрасываем кеш даты релиза при изменении прогресса
+            cachedReleaseDate = null;
+            cachedProgress = null;
         } else {
             const lastUpdate = await getLastProgressUpdate();
             const lastUpdateStr = lastUpdate ? new Date(lastUpdate).toLocaleString('ru-RU') : 'никогда';
@@ -872,6 +901,7 @@ async function loadAndUpdateProgress() {
         await updateCountdownTimer();
         
         // Запускаем обновление таймера каждую секунду
+        // calculateReleaseDate теперь кеширует результат, поэтому запросы к Supabase будут реже
         setInterval(async () => {
             await updateCountdownTimer();
         }, 1000);
@@ -893,6 +923,11 @@ async function loadAndUpdateProgress() {
                 await saveProgress(progress);
                 await saveLastProgressUpdate();
                 updateProgressDisplay(progress);
+                
+                // Сбрасываем кеш даты релиза при изменении прогресса
+                cachedReleaseDate = null;
+                cachedProgress = null;
+                
                 console.log(`✅ Прогресс автоматически обновлен: ${oldProgress.toFixed(1)}% → ${progress.toFixed(1)}%`);
             }
         }, 60000); // Проверяем каждую минуту
@@ -901,6 +936,7 @@ async function loadAndUpdateProgress() {
         // При ошибке используем значение по умолчанию
         updateProgressDisplay(INITIAL_PROGRESS);
         await updateCountdownTimer();
+        // Запускаем обновление таймера каждую секунду (calculateReleaseDate кеширует результат)
         setInterval(async () => {
             await updateCountdownTimer();
         }, 1000);
@@ -1328,17 +1364,8 @@ async function getInstagramFollowers() {
         }
         
         const count = parseFloat(data.count) || 0;
-        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
-        const now = new Date();
         
-        // Проверяем свежесть данных (бот обновляет каждые 5 минут)
-        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
-        
-        if (!isDataFresh) {
-            // Данные устарели
-            return 0;
-        }
-        
+        // Возвращаем значение если оно есть (независимо от свежести)
         return count;
     } catch (error) {
         console.error('Ошибка получения Instagram подписчиков:', error);
@@ -1366,17 +1393,8 @@ async function getTikTokFollowers() {
         }
         
         const count = parseFloat(data.count) || 0;
-        const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
-        const now = new Date();
         
-        // Проверяем свежесть данных (бот обновляет каждые 5 минут)
-        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
-        
-        if (!isDataFresh) {
-            // Данные устарели
-            return 0;
-        }
-        
+        // Возвращаем значение если оно есть (независимо от свежести)
         return count;
     } catch (error) {
         console.error('Ошибка получения TikTok подписчиков:', error);
@@ -1433,15 +1451,10 @@ async function loadInstagramCount() {
         
         const instagramCount = parseFloat(data.count) || 0;
         const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
-        const now = new Date();
-        
-        // Проверяем, насколько свежие данные (бот обновляет каждые 5 минут)
-        // Если данные старше 10 минут - считаем их устаревшими и показываем "подсчет..."
-        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
         
         if (instagramCountElement) {
-            if (instagramCount > 0 && isDataFresh) {
-                // Данные свежие - показываем реальное количество
+            if (instagramCount > 0) {
+                // Данные есть в базе - показываем реальное количество (независимо от свежести)
                 console.log(`📊 Получено из Supabase: ${instagramCount.toLocaleString('ru-RU')} подписчиков Instagram (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'})`);
                 instagramCountElement.style.opacity = '1';
                 instagramCountElement.style.fontSize = '1.8rem';
@@ -1450,12 +1463,8 @@ async function loadInstagramCount() {
                 animateNumber(instagramCountElement, 0, instagramCount, 800);
                 console.log(`✅ Instagram счетчик обновлен на странице: ${instagramCount.toLocaleString('ru-RU')}`);
             } else {
-                // Данные устарели или их нет - показываем "подсчет..."
-                if (!isDataFresh) {
-                    console.log(`⏳ Данные Instagram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
-                } else {
-                    console.log('⏳ Данные Instagram еще не загружены, показываем "подсчет..."');
-                }
+                // Данных нет (равны 0) - показываем "подсчет..."
+                console.log('⏳ Instagram счетчик равен 0, показываем "подсчет..."');
                 instagramCountElement.textContent = 'подсчет...';
                 instagramCountElement.style.opacity = '0.7';
                 instagramCountElement.style.fontSize = '1.2rem';
@@ -1524,15 +1533,10 @@ async function loadTikTokCount() {
         
         const tiktokCount = parseFloat(data.count) || 0;
         const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
-        const now = new Date();
-        
-        // Проверяем, насколько свежие данные (бот обновляет каждые 5 минут)
-        // Если данные старше 10 минут - считаем их устаревшими и показываем "подсчет..."
-        const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
         
         if (tiktokCountElement) {
-            if (tiktokCount > 0 && isDataFresh) {
-                // Данные свежие - показываем реальное количество
+            if (tiktokCount > 0) {
+                // Данные есть в базе - показываем реальное количество (независимо от свежести)
                 console.log(`📊 Получено из Supabase: ${tiktokCount.toLocaleString('ru-RU')} подписчиков TikTok (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'})`);
                 tiktokCountElement.style.opacity = '1';
                 tiktokCountElement.style.fontSize = '1.8rem';
@@ -1541,12 +1545,8 @@ async function loadTikTokCount() {
                 animateNumber(tiktokCountElement, 0, tiktokCount, 800);
                 console.log(`✅ TikTok счетчик обновлен на странице: ${tiktokCount.toLocaleString('ru-RU')}`);
             } else {
-                // Данные устарели или их нет - показываем "подсчет..."
-                if (!isDataFresh) {
-                    console.log(`⏳ Данные TikTok устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
-                } else {
-                    console.log('⏳ Данные TikTok еще не загружены, показываем "подсчет..."');
-                }
+                // Данных нет (равны 0) - показываем "подсчет..."
+                console.log('⏳ TikTok счетчик равен 0, показываем "подсчет..."');
                 tiktokCountElement.textContent = 'подсчет...';
                 tiktokCountElement.style.opacity = '0.7';
                 tiktokCountElement.style.fontSize = '1.2rem';
@@ -1777,44 +1777,29 @@ async function loadSocialCounts() {
             }
             
             const newInstagramCount = parseFloat(data.count) || 0;
-            const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
-            const now = new Date();
-            const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
-            
             const currentText = instagramCountElement.textContent.trim();
             
-            if (!isDataFresh) {
-                // Данные устарели - показываем "подсчет..."
-                if (currentText !== 'подсчет...') {
-                    console.log(`⏳ Данные Instagram устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
-                    instagramCountElement.textContent = 'подсчет...';
-                    instagramCountElement.style.opacity = '0.7';
-                    instagramCountElement.style.fontSize = '1.2rem';
-                    instagramCountElement.style.fontStyle = 'italic';
-                    instagramCountElement.classList.add('counting');
-                }
-                return;
-            }
-            
-            // Данные свежие
-            if (currentText === 'подсчет...' && newInstagramCount > 0) {
-                // Если показывается "подсчет..." и данные получены - обновляем
-                instagramCountElement.style.opacity = '1';
-                instagramCountElement.style.fontSize = '1.8rem';
-                instagramCountElement.style.fontStyle = 'normal';
-                instagramCountElement.classList.remove('counting');
-                animateNumber(instagramCountElement, 0, newInstagramCount, 500);
-                console.log(`✅ Instagram счетчик обновлен: ${newInstagramCount.toLocaleString('ru-RU')} подписчиков`);
-            } 
-            // Если данные есть и значение изменилось - обновляем
-            else if (currentText !== 'подсчет...' && newInstagramCount > 0) {
-                const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
-                if (Math.abs(currentCount - newInstagramCount) > 0) {
-                    console.log(`🔄 Обновление Instagram счетчика: ${currentCount} → ${newInstagramCount}`);
-                    animateNumber(instagramCountElement, currentCount, newInstagramCount, 500);
+            // Показываем данные если они есть в базе (независимо от свежести)
+            if (newInstagramCount > 0) {
+                if (currentText === 'подсчет...') {
+                    // Если показывается "подсчет..." и данные получены - обновляем
+                    instagramCountElement.style.opacity = '1';
+                    instagramCountElement.style.fontSize = '1.8rem';
+                    instagramCountElement.style.fontStyle = 'normal';
+                    instagramCountElement.classList.remove('counting');
+                    animateNumber(instagramCountElement, 0, newInstagramCount, 500);
+                    console.log(`✅ Instagram счетчик обновлен: ${newInstagramCount.toLocaleString('ru-RU')} подписчиков`);
+                } 
+                // Если данные есть и значение изменилось - обновляем
+                else {
+                    const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
+                    if (Math.abs(currentCount - newInstagramCount) > 0) {
+                        console.log(`🔄 Обновление Instagram счетчика: ${currentCount} → ${newInstagramCount}`);
+                        animateNumber(instagramCountElement, currentCount, newInstagramCount, 500);
+                    }
                 }
             }
-            // Если данных еще нет - показываем "подсчет..."
+            // Если данных нет (равны 0) - показываем "подсчет..."
             else if (newInstagramCount === 0) {
                 if (currentText !== 'подсчет...') {
                     instagramCountElement.textContent = 'подсчет...';
@@ -1858,44 +1843,29 @@ async function loadSocialCounts() {
             }
             
             const newTikTokCount = parseFloat(data.count) || 0;
-            const updatedAt = data.updated_at ? new Date(data.updated_at) : null;
-            const now = new Date();
-            const isDataFresh = updatedAt && (now - updatedAt) < 10 * 60 * 1000; // 10 минут
-            
             const currentText = tiktokCountElement.textContent.trim();
             
-            if (!isDataFresh) {
-                // Данные устарели - показываем "подсчет..."
-                if (currentText !== 'подсчет...') {
-                    console.log(`⏳ Данные TikTok устарели (обновлено: ${updatedAt ? updatedAt.toLocaleString('ru-RU') : 'неизвестно'}), показываем "подсчет..."`);
-                    tiktokCountElement.textContent = 'подсчет...';
-                    tiktokCountElement.style.opacity = '0.7';
-                    tiktokCountElement.style.fontSize = '1.2rem';
-                    tiktokCountElement.style.fontStyle = 'italic';
-                    tiktokCountElement.classList.add('counting');
-                }
-                return;
-            }
-            
-            // Данные свежие
-            if (currentText === 'подсчет...' && newTikTokCount > 0) {
-                // Если показывается "подсчет..." и данные получены - обновляем
-                tiktokCountElement.style.opacity = '1';
-                tiktokCountElement.style.fontSize = '1.8rem';
-                tiktokCountElement.style.fontStyle = 'normal';
-                tiktokCountElement.classList.remove('counting');
-                animateNumber(tiktokCountElement, 0, newTikTokCount, 500);
-                console.log(`✅ TikTok счетчик обновлен: ${newTikTokCount.toLocaleString('ru-RU')} подписчиков`);
-            } 
-            // Если данные есть и значение изменилось - обновляем
-            else if (currentText !== 'подсчет...' && newTikTokCount > 0) {
-                const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
-                if (Math.abs(currentCount - newTikTokCount) > 0) {
-                    console.log(`🔄 Обновление TikTok счетчика: ${currentCount} → ${newTikTokCount}`);
-                    animateNumber(tiktokCountElement, currentCount, newTikTokCount, 500);
+            // Показываем данные если они есть в базе (независимо от свежести)
+            if (newTikTokCount > 0) {
+                if (currentText === 'подсчет...') {
+                    // Если показывается "подсчет..." и данные получены - обновляем
+                    tiktokCountElement.style.opacity = '1';
+                    tiktokCountElement.style.fontSize = '1.8rem';
+                    tiktokCountElement.style.fontStyle = 'normal';
+                    tiktokCountElement.classList.remove('counting');
+                    animateNumber(tiktokCountElement, 0, newTikTokCount, 500);
+                    console.log(`✅ TikTok счетчик обновлен: ${newTikTokCount.toLocaleString('ru-RU')} подписчиков`);
+                } 
+                // Если данные есть и значение изменилось - обновляем
+                else {
+                    const currentCount = parseFloat(currentText.replace(/\./g, '').replace(/,/g, '').replace(/\s/g, '')) || 0;
+                    if (Math.abs(currentCount - newTikTokCount) > 0) {
+                        console.log(`🔄 Обновление TikTok счетчика: ${currentCount} → ${newTikTokCount}`);
+                        animateNumber(tiktokCountElement, currentCount, newTikTokCount, 500);
+                    }
                 }
             }
-            // Если данных еще нет - показываем "подсчет..."
+            // Если данных нет (равны 0) - показываем "подсчет..."
             else if (newTikTokCount === 0) {
                 if (currentText !== 'подсчет...') {
                     tiktokCountElement.textContent = 'подсчет...';
