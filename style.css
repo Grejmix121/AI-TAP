@@ -622,6 +622,31 @@ body::-webkit-scrollbar-thumb:hover {
     font-weight: 600;
 }
 
+.giveaway-info-text {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.giveaway-info-paragraph {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+    text-align: left;
+}
+
+.giveaway-info-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.giveaway-info-paragraph strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
 .giveaway-note {
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
@@ -1229,6 +1254,16 @@ body::-webkit-scrollbar-thumb:hover {
         padding: 0.6rem 0.4rem;
     }
     
+    .giveaway-info-text {
+        padding: 0.875rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .giveaway-info-paragraph {
+        font-size: 0.85rem;
+        margin-bottom: 0.65rem;
+    }
+    
     .giveaway-note {
         font-size: 0.8rem;
         margin-top: 0.75rem;
@@ -1411,6 +1446,16 @@ body::-webkit-scrollbar-thumb:hover {
     
     .giveaway-table th {
         font-size: 0.7rem;
+    }
+    
+    .giveaway-info-text {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .giveaway-info-paragraph {
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
     }
     
     .giveaway-note {
