@@ -2092,10 +2092,15 @@ async function handleWishUndo() {
         const fingerprint = getUserFingerprint();
         
         // Удаляем запись клика для этого пользователя
-        await client.from('startzero_user_clicks')
+        const { error: deleteError } = await client.from('startzero_user_clicks')
             .delete()
-            .eq('fingerprint', fingerprint)
+            .eq('user_fingerprint', fingerprint)
             .eq('counter_type', 'wish');
+        
+        if (deleteError) {
+            console.error('Ошибка удаления клика:', deleteError);
+            throw deleteError;
+        }
         
         // Уменьшаем общий счётчик на 1
         const currentCount = await loadCounterFromSupabase('wish');
