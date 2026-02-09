@@ -2055,6 +2055,60 @@ async function hasParticipated(email, social) {
     return (count || 0) > 0;
 }
 
+// Маскировать email: "jo***@gmail.com"
+function maskEmail(email) {
+    if (!email) return '***';
+    const [local, domain] = email.split('@');
+    if (!domain) return '***';
+    const visible = local.substring(0, 2);
+    return `${visible}***@${domain}`;
+}
+
+// Загрузить последних победителей для соцсети
+async function loadWinnersLog(social) {
+    const client = getSupabaseClient();
+    if (!client) return [];
+    try {
+        const { data } = await client.from('startzero_giveaway_winners')
+            .select('email, prize_details, won_at')
+            .eq('threshold', social)
+            .neq('prize_level', 'loss')
+            .order('won_at', { ascending: false })
+            .limit(10);
+        return data || [];
+    } catch (e) {
+        console.error('Ошибка загрузки лога:', e);
+        return [];
+    }
+}
+
+// Обновить лог победителей в UI
+async function updateWinnersLogUI(social) {
+    const listEl = document.getElementById(`winners-list-${social}`);
+    if (!listEl) return;
+    
+    const winners = await loadWinnersLog(social);
+    
+    if (winners.length === 0) {
+        listEl.innerHTML = '<div class="winners-log-empty">Пока нет победителей</div>';
+        return;
+    }
+    
+    let html = '';
+    winners.forEach(w => {
+        const name = (w.prize_details && w.prize_details.name) || 'Участник';
+        const masked = maskEmail(w.email);
+        const time = w.won_at ? new Date(w.won_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+        html += `<div class="winners-log-entry">
+            <span class="winner-icon">🎉</span>
+            <span class="winner-name">${name}</span>
+            <span class="winner-email">${masked}</span>
+            <span class="winner-time">${time}</span>
+        </div>`;
+    });
+    listEl.innerHTML = html;
+}
+
 // --- ОБНОВЛЕНИЕ UI РОЗЫГРЫШЕЙ ---
 async function updateParticipationTable() {
     const client = getSupabaseClient();
@@ -2065,6 +2119,7 @@ async function updateParticipationTable() {
         for (const [social, cfg] of Object.entries(GIVEAWAYS)) {
             const statusEl = document.getElementById(`status-${social}`);
             const btn = document.getElementById(`participate-btn-${social}`);
+            const remainingEl = document.getElementById(`remaining-count-${social}`);
             if (!statusEl || !btn) continue;
             
             const reached = counts[social] >= cfg.threshold;
@@ -2072,13 +2127,19 @@ async function updateParticipationTable() {
             
             if (reached) {
                 const wins = await getWinCount(social);
+                const remaining = cfg.maxWins - wins;
+                
+                // Обновляем счётчик остатка
+                if (remainingEl) {
+                    remainingEl.textContent = remaining > 0 ? remaining.toLocaleString('ru-RU') : '0';
+                }
                 
                 if (wins >= cfg.maxWins) {
-                    st.textContent = `Все места разыграны (${wins.toLocaleString('ru-RU')} из ${cfg.maxWins.toLocaleString('ru-RU')})`;
+                    st.textContent = `Все места разыграны!`;
                     st.className = 'giveaway-status-text done';
                     btn.disabled = true; btn.textContent = 'Розыграно';
                 } else {
-                    st.textContent = `Розыгрыш активен! (${wins.toLocaleString('ru-RU')} / ${cfg.maxWins.toLocaleString('ru-RU')} выиграно)`;
+                    st.textContent = `Розыгрыш активен!`;
                     st.className = 'giveaway-status-text active';
                     btn.disabled = false; btn.textContent = 'Участвовать';
                 }
@@ -2088,6 +2149,9 @@ async function updateParticipationTable() {
                 st.className = 'giveaway-status-text';
                 btn.disabled = true; btn.textContent = 'Участвовать';
             }
+            
+            // Обновляем лог победителей
+            updateWinnersLogUI(social);
         }
     } catch (err) {
         console.error('❌ Ошибка обновления UI розыгрышей:', err);
@@ -2095,11 +2159,12 @@ async function updateParticipationTable() {
 }
 
 // --- ПРОВЕДЕНИЕ РОЗЫГРЫША ---
-async function conductGiveaway(social, email) {
+async function conductGiveaway(social, email, name) {
     const client = getSupabaseClient();
     if (!client) return { error: 'Нет подключения к БД' };
     
     email = email.toLowerCase().trim();
+    name = (name || '').trim();
     const cfg = GIVEAWAYS[social];
     if (!cfg) return { error: 'Неизвестная соцсеть' };
     
@@ -2123,13 +2188,13 @@ async function conductGiveaway(social, email) {
     if (won) {
         await client.from('startzero_giveaway_winners').insert({
             email, threshold: social, prize_level: social,
-            prize_details: { title: cfg.prize.title, social }
+            prize_details: { title: cfg.prize.title, social, name }
         });
         return { won: true, prize: cfg.prize };
     } else {
         await client.from('startzero_giveaway_winners').insert({
             email, threshold: social, prize_level: 'loss',
-            prize_details: { social, result: 'loss' }
+            prize_details: { social, result: 'loss', name }
         });
         return { won: false };
     }
@@ -2151,6 +2216,8 @@ function openGiveawayModal(type) {
     animationStep.style.display = 'none';
     resultStep.style.display = 'none';
     if (emailInput) emailInput.value = '';
+    const nameInput = document.getElementById('giveawayName');
+    if (nameInput) nameInput.value = '';
     
     const title = document.getElementById('giveawayModalTitle');
     const subtitle = document.getElementById('giveawayModalSubtitle');
@@ -2177,9 +2244,17 @@ document.addEventListener('keydown', (e) => {
 async function handleGiveawaySubmit(event) {
     event.preventDefault();
     const emailInput = document.getElementById('giveawayEmail');
+    const nameInput = document.getElementById('giveawayName');
     if (!emailInput || !currentGiveawayType) return;
     
     const email = emailInput.value.trim().toLowerCase();
+    const name = (nameInput ? nameInput.value.trim() : '');
+    
+    if (!name || name.length < 2) {
+        showNotification('❌ Введите ваше имя (минимум 2 символа)', 'error');
+        return;
+    }
+    
     if (!email || !email.includes('@') || !email.includes('.')) {
         showNotification('❌ Введите корректный email', 'error');
         return;
@@ -2201,7 +2276,7 @@ async function handleGiveawaySubmit(event) {
     
     // Анимация розыгрыша (2.5 сек)
     const animText = document.getElementById('giveawayAnimationText');
-    const phrases = ['Изучаем технику удача...', 'Крутим барабан...', 'Почти готово...', 'Определяем результат...'];
+    const phrases = ['Крутим барабан...', 'Определяем судьбу...', 'Почти готово...', 'Ещё чуть-чуть...'];
     let pi = 0;
     const phraseInterval = setInterval(() => {
         if (animText) animText.textContent = phrases[pi % phrases.length];
@@ -2211,12 +2286,12 @@ async function handleGiveawaySubmit(event) {
     await new Promise(r => setTimeout(r, 2500));
     clearInterval(phraseInterval);
     
-    const result = await conductGiveawayWithTest(currentGiveawayType, email);
-    showGiveawayResult(result, email);
+    const result = await conductGiveawayWithTest(currentGiveawayType, email, name);
+    showGiveawayResult(result, email, name);
 }
 
 // --- ОТОБРАЖЕНИЕ РЕЗУЛЬТАТА ---
-function showGiveawayResult(result, email) {
+function showGiveawayResult(result, email, name) {
     const animationStep = document.getElementById('giveawayAnimationStep');
     const resultStep = document.getElementById('giveawayResultStep');
     const resultContent = document.getElementById('giveawayResultContent');
@@ -2234,12 +2309,14 @@ function showGiveawayResult(result, email) {
         return;
     }
     
+    const displayName = name || 'Участник';
+    
     if (result.won) {
         const prize = result.prize || {};
         resultContent.innerHTML = `
             <div class="giveaway-result-icon">🎉</div>
-            <h2 class="giveaway-result-title win">Поздравляем!</h2>
-            <p class="giveaway-result-message">Вы выиграли приз! Администратор свяжется для выдачи.</p>
+            <h2 class="giveaway-result-title win">Поздравляем, ${displayName}!</h2>
+            <p class="giveaway-result-message">Вы выиграли приз!</p>
             <div class="giveaway-win-cards">
                 <div class="giveaway-win-card">
                     <img src="${prize.img || 'Prosmotr vmeste.jpg'}" alt="${prize.title}" class="giveaway-win-img">
@@ -2248,15 +2325,18 @@ function showGiveawayResult(result, email) {
                     </div>
                 </div>
             </div>
-            <div class="giveaway-result-email">Email: ${email}</div>
-            <p class="giveaway-result-admin-note">💡 Приз будет выдан администратором</p>
+            <div class="giveaway-result-email">📧 ${maskEmail(email)}</div>
+            <div class="giveaway-result-email-notice">
+                <p>🔑 <strong>Запомните указанную почту!</strong></p>
+                <p>Приз привязан к вашему email. При регистрации на сайте <strong>используйте эту же почту</strong> — приз автоматически появится на вашем аккаунте после запуска сайта.</p>
+            </div>
             <button class="giveaway-result-button" onclick="closeGiveawayModal()">Закрыть</button>
         `;
     } else {
         resultContent.innerHTML = `
             <div class="giveaway-result-icon">😔</div>
-            <h2 class="giveaway-result-title lose">Не повезло</h2>
-            <p class="giveaway-result-message">К сожалению, в этот раз удача не на вашей стороне. Не расстраивайтесь!</p>
+            <h2 class="giveaway-result-title lose">Не повезло, ${displayName}</h2>
+            <p class="giveaway-result-message">К сожалению, в этот раз удача не на вашей стороне. Не расстраивайтесь — подпишитесь на другие соцсети и участвуйте в остальных розыгрышах!</p>
             <button class="giveaway-result-button" onclick="closeGiveawayModal()">Понятно</button>
         `;
     }
@@ -2380,13 +2460,14 @@ async function handleParticipateWithTest(type) {
 
 // Переопределяем conductGiveaway чтобы не проверять порог в тесте
 const _originalConductGiveaway = conductGiveaway;
-async function conductGiveawayWithTest(social, email) {
+async function conductGiveawayWithTest(social, email, name) {
     // Если тестовый оверрайд — подменяем проверку порога
     if (testGiveawayOverrides[social]) {
         const client = getSupabaseClient();
         if (!client) return { error: 'Нет подключения к БД' };
         
         email = email.toLowerCase().trim();
+        name = (name || '').trim();
         const cfg = GIVEAWAYS[social];
         if (!cfg) return { error: 'Неизвестная соцсеть' };
         
@@ -2404,18 +2485,18 @@ async function conductGiveawayWithTest(social, email) {
         if (won) {
             await client.from('startzero_giveaway_winners').insert({
                 email, threshold: social, prize_level: social,
-                prize_details: { title: cfg.prize.title, social, test: true }
+                prize_details: { title: cfg.prize.title, social, name, test: true }
             });
             return { won: true, prize: cfg.prize };
         } else {
             await client.from('startzero_giveaway_winners').insert({
                 email, threshold: social, prize_level: 'loss',
-                prize_details: { social, result: 'loss', test: true }
+                prize_details: { social, result: 'loss', name, test: true }
             });
             return { won: false };
         }
     }
-    return _originalConductGiveaway(social, email);
+    return _originalConductGiveaway(social, email, name);
 }
 
 // ==================== КРАСИВАЯ АНИМАЦИЯ КНОПКИ «ЖДЁМС» ====================
