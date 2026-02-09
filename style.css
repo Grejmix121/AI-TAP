@@ -517,6 +517,908 @@ body::-webkit-scrollbar-thumb:hover {
     text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
 }
 
+/* Секция розыгрыша */
+.giveaway-section {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
+    border-radius: 16px;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+    animation: fadeInUp 1s ease-out 0.7s both;
+}
+
+.giveaway-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.giveaway-description {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    text-align: center;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.giveaway-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.giveaway-table-wrapper {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.giveaway-table-wrapper:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(168, 85, 247, 0.3);
+    border-color: rgba(168, 85, 247, 0.4);
+}
+
+.giveaway-table-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+.giveaway-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.giveaway-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+
+.giveaway-table thead {
+    background: rgba(168, 85, 247, 0.2);
+}
+
+.giveaway-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-bottom: 2px solid rgba(168, 85, 247, 0.3);
+}
+
+.giveaway-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    border-bottom: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.giveaway-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.giveaway-table tbody tr:hover {
+    background: rgba(168, 85, 247, 0.1);
+    transition: background 0.2s ease;
+}
+
+.giveaway-table td strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.giveaway-info-text {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.giveaway-info-paragraph {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.6;
+    margin-bottom: 0.75rem;
+    text-align: left;
+}
+
+.giveaway-info-paragraph:last-child {
+    margin-bottom: 0;
+}
+
+.giveaway-info-paragraph strong {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.giveaway-note {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(168, 85, 247, 0.2);
+    font-style: italic;
+}
+
+/* ==========================================
+   СЕКЦИЯ УЧАСТИЯ В РОЗЫГРЫШЕ
+   ========================================== */
+
+.giveaway-participate-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.giveaway-participate-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+.giveaway-participate-subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.giveaway-prize-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+}
+
+.giveaway-prize-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.08) 0%, rgba(59, 130, 246, 0.08) 100%);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    overflow: hidden;
+}
+
+.giveaway-prize-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(168, 85, 247, 0.25);
+    border-color: rgba(168, 85, 247, 0.5);
+}
+
+.giveaway-prize-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(168, 85, 247, 0.06), transparent);
+    animation: prizeCardGlow 8s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes prizeCardGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.prize-card-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    z-index: 1;
+}
+
+.prize-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.prize-card-social {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.prize-card-prize {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+    position: relative;
+    z-index: 1;
+}
+
+.prize-card-prize-icon {
+    font-size: 1.2rem;
+}
+
+.prize-card-prize-name {
+    font-size: 0.85rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.prize-card-duration {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.prize-card-count {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 1;
+}
+
+.prize-card-count strong {
+    color: var(--primary-color);
+}
+
+.giveaway-participate-btn {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding: 0.7rem;
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);
+}
+
+.giveaway-participate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+    background: linear-gradient(135deg, #9333ea, #4f46e5);
+}
+
+.giveaway-participate-btn:active {
+    transform: translateY(0);
+}
+
+.giveaway-participate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none;
+}
+
+.giveaway-participate-btn.participated {
+    background: linear-gradient(135deg, #374151, #4b5563);
+    box-shadow: none;
+    cursor: default;
+}
+
+.giveaway-participate-btn.participated:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* ==========================================
+   СЕКЦИЯ ПОБЕДИТЕЛЕЙ
+   ========================================== */
+
+.giveaway-winners-section {
+    margin-top: 1.5rem;
+    padding: 1.25rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.giveaway-winners-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 1rem;
+}
+
+.giveaway-winners-list {
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
+}
+
+.giveaway-winners-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.giveaway-winners-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.giveaway-winners-list::-webkit-scrollbar-thumb {
+    background: rgba(168, 85, 247, 0.3);
+    border-radius: 3px;
+}
+
+.giveaway-no-winners {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    font-style: italic;
+    padding: 1rem;
+}
+
+.giveaway-winner-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.75rem;
+    background: rgba(168, 85, 247, 0.05);
+    border-radius: 8px;
+    margin-bottom: 0.4rem;
+    border: 1px solid rgba(168, 85, 247, 0.1);
+    transition: background 0.2s;
+    gap: 0.5rem;
+}
+
+.giveaway-winner-item:hover {
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.winner-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.winner-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.winner-email {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.winner-prize {
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.winner-prize-icon {
+    font-size: 1.2rem;
+    display: block;
+}
+
+.winner-prize-name {
+    font-size: 0.7rem;
+    color: var(--primary-color);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.winner-date {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.35);
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   МОДАЛЬНОЕ ОКНО РОЗЫГРЫША
+   ========================================== */
+
+.giveaway-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.giveaway-modal {
+    position: relative;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border: 2px solid rgba(168, 85, 247, 0.4);
+    border-radius: 24px;
+    padding: 2rem;
+    max-width: 460px;
+    width: 92%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(168, 85, 247, 0.15);
+    animation: modalSlideIn 0.4s ease;
+}
+
+@keyframes modalSlideIn {
+    from { transform: translateY(30px) scale(0.95); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.giveaway-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    line-height: 1;
+}
+
+.giveaway-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.giveaway-modal-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+
+/* Prize Preview */
+.giveaway-prize-preview {
+    text-align: center;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(59, 130, 246, 0.12) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    margin-bottom: 1.25rem;
+}
+
+.prize-preview-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.prize-preview-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+}
+
+.prize-preview-duration {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.prize-preview-remaining {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 0.5rem;
+}
+
+/* Form */
+.giveaway-form-warning {
+    font-size: 0.8rem;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 10px;
+    padding: 0.75rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+.giveaway-input-group {
+    margin-bottom: 1rem;
+}
+
+.giveaway-input-group label {
+    display: block;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.35rem;
+    font-weight: 500;
+}
+
+.giveaway-input-group input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 12px;
+    color: white;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.giveaway-input-group input:focus {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.15);
+}
+
+.giveaway-input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.giveaway-spin-btn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #a855f7, #ec4899, #6366f1);
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 20px rgba(168, 85, 247, 0.4);
+    margin-top: 0.5rem;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.giveaway-spin-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(168, 85, 247, 0.6);
+}
+
+.giveaway-spin-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    animation: none;
+}
+
+/* ==========================================
+   СЛОТ-МАШИНА
+   ========================================== */
+
+.giveaway-slot-machine {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}
+
+.slot-machine-frame {
+    background: linear-gradient(180deg, #2d1b69, #1a0a3e);
+    border: 3px solid #a855f7;
+    border-radius: 20px;
+    padding: 1.25rem;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.2), inset 0 0 15px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.slot-machine-frame::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: linear-gradient(45deg, #a855f7, #ec4899, #6366f1, #a855f7);
+    background-size: 400% 400%;
+    z-index: -1;
+    border-radius: 22px;
+    animation: slotBorderGlow 3s ease infinite;
+}
+
+@keyframes slotBorderGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.slot-machine-lights {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 0.75rem;
+}
+
+.slot-machine-lights.bottom {
+    margin-bottom: 0;
+    margin-top: 0.75rem;
+}
+
+.slot-light {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fbbf24;
+    box-shadow: 0 0 8px #fbbf24;
+    animation: lightBlink 0.8s ease-in-out infinite alternate;
+}
+
+.slot-light:nth-child(2) { animation-delay: 0.15s; }
+.slot-light:nth-child(3) { animation-delay: 0.3s; }
+.slot-light:nth-child(4) { animation-delay: 0.45s; }
+.slot-light:nth-child(5) { animation-delay: 0.6s; }
+
+@keyframes lightBlink {
+    from { opacity: 0.3; box-shadow: 0 0 4px #fbbf24; }
+    to { opacity: 1; box-shadow: 0 0 12px #fbbf24; }
+}
+
+.slot-reels-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 12px;
+    padding: 0.5rem;
+    border: 2px solid rgba(168, 85, 247, 0.3);
+}
+
+.slot-reel-window {
+    width: 90px;
+    height: 90px;
+    overflow: hidden;
+    position: relative;
+}
+
+.slot-reel-window::before,
+.slot-reel-window::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 15px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.slot-reel-window::before {
+    top: 0;
+    background: linear-gradient(180deg, rgba(26, 10, 62, 0.9), transparent);
+}
+
+.slot-reel-window::after {
+    bottom: 0;
+    background: linear-gradient(0deg, rgba(26, 10, 62, 0.9), transparent);
+}
+
+.slot-reel {
+    display: flex;
+    flex-direction: column;
+    will-change: transform;
+}
+
+.slot-symbol {
+    width: 90px;
+    height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.8rem;
+    flex-shrink: 0;
+}
+
+.slot-reel-divider {
+    width: 2px;
+    height: 90px;
+    background: rgba(168, 85, 247, 0.35);
+    flex-shrink: 0;
+}
+
+.slot-spinning-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    animation: pulseText 1s ease-in-out infinite;
+    text-align: center;
+}
+
+@keyframes pulseText {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+/* ==========================================
+   РЕЗУЛЬТАТ РОЗЫГРЫША
+   ========================================== */
+
+.giveaway-result {
+    display: none;
+    text-align: center;
+}
+
+.giveaway-result-win {
+    animation: resultWinAppear 0.5s ease;
+}
+
+@keyframes resultWinAppear {
+    from { transform: scale(0.5); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.giveaway-result-win h3 {
+    font-size: 1.4rem;
+    color: #fbbf24;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+}
+
+.giveaway-result-prize {
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12), rgba(168, 85, 247, 0.12));
+    border: 1px solid rgba(251, 191, 36, 0.25);
+    border-radius: 16px;
+    margin-bottom: 1rem;
+}
+
+.result-prize-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.result-prize-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.result-prize-duration {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    display: block;
+}
+
+.giveaway-result-info {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+    padding: 0.75rem;
+    background: rgba(168, 85, 247, 0.08);
+    border-radius: 10px;
+}
+
+.giveaway-result-lose {
+    animation: resultLoseAppear 0.5s ease;
+}
+
+@keyframes resultLoseAppear {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.giveaway-result-lose h3 {
+    font-size: 1.3rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0.75rem;
+}
+
+.giveaway-result-lose p {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.25rem;
+    line-height: 1.5;
+}
+
+.giveaway-close-btn {
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, #a855f7, #6366f1);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.35);
+}
+
+.giveaway-close-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+}
+
+/* Confetti */
+.giveaway-confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10001;
+    overflow: hidden;
+}
+
+.confetti-particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    top: -10px;
+    animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    80% { opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
+}
 
 /* Информация о проекте */
 .project-info {
@@ -749,7 +1651,7 @@ body::-webkit-scrollbar-thumb:hover {
     align-items: center;
     gap: 0.5rem;
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
 .wish-btn:hover:not(:disabled) {
@@ -768,61 +1670,8 @@ body::-webkit-scrollbar-thumb:hover {
 }
 
 .wish-btn.clicked {
-    background: linear-gradient(135deg, #10b981, #34d399) !important;
-    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6) !important;
-    opacity: 1 !important;
-    cursor: default;
-}
-
-/* Контейнер для кнопок Ждёмс + Отменить */
-.wish-buttons-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-/* Кнопка отмены голоса */
-.wish-undo-btn {
-    background: rgba(239, 68, 68, 0.15);
-    color: #f87171;
-    border: 2px solid rgba(239, 68, 68, 0.3);
-    padding: 0.8rem 1.5rem;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    animation: fadeIn 0.4s ease-out;
-}
-
-.wish-undo-btn:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.25);
-    border-color: rgba(239, 68, 68, 0.5);
-    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-    transform: translateY(-2px);
-}
-
-.wish-undo-btn:active:not(:disabled) {
-    transform: translateY(0);
-}
-
-.wish-undo-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.wish-undo-icon {
-    font-size: 1.1rem;
-}
-
-.wish-undo-text {
-    position: relative;
-    z-index: 1;
+    background: linear-gradient(135deg, #10b981, #34d399);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
 }
 
 .wish-btn-text {
@@ -1133,6 +1982,104 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 1.2rem;
     }
     
+    .giveaway-title {
+        font-size: 1.2rem;
+    }
+    
+    .giveaway-description {
+        font-size: 0.85rem;
+    }
+    
+    .giveaway-section {
+        padding: 1.25rem;
+    }
+    
+    .giveaway-tables-grid {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    
+    .giveaway-table-wrapper {
+        padding: 0.875rem;
+    }
+    
+    .giveaway-table-title {
+        font-size: 1rem;
+        margin-bottom: 0.875rem;
+    }
+    
+    .giveaway-table {
+        font-size: 0.8rem;
+    }
+    
+    .giveaway-table th,
+    .giveaway-table td {
+        padding: 0.6rem 0.4rem;
+    }
+    
+    .giveaway-info-text {
+        padding: 0.875rem;
+        margin-bottom: 1.25rem;
+    }
+    
+    .giveaway-info-paragraph {
+        font-size: 0.85rem;
+        margin-bottom: 0.65rem;
+    }
+    
+    .giveaway-note {
+        font-size: 0.8rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+    
+    .giveaway-participate-section {
+        padding: 1.25rem;
+        margin-top: 1.5rem;
+    }
+    
+    .giveaway-participate-title {
+        font-size: 1.15rem;
+    }
+    
+    .giveaway-prize-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .giveaway-prize-card {
+        padding: 1.25rem 1rem;
+    }
+    
+    .giveaway-winners-section {
+        padding: 1rem;
+    }
+    
+    .giveaway-winner-item {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+    
+    .giveaway-modal {
+        padding: 1.5rem;
+        width: 94%;
+    }
+    
+    .slot-reel-window {
+        width: 75px;
+        height: 75px;
+    }
+    
+    .slot-symbol {
+        width: 75px;
+        height: 75px;
+        font-size: 2.3rem;
+    }
+    
+    .slot-reel-divider {
+        height: 75px;
+    }
+
     .info-title {
         font-size: 1.2rem;
     }
@@ -1219,11 +2166,6 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 1.1rem;
     }
 
-    .wish-undo-btn {
-        padding: 0.7rem 1.2rem;
-        font-size: 0.85rem;
-    }
-
     .wish-counter-card {
         padding: 1.5rem;
     }
@@ -1276,6 +2218,150 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 0.9rem;
     }
     
+    .giveaway-section {
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+    
+    .giveaway-title {
+        font-size: 1.1rem;
+    }
+    
+    .giveaway-description {
+        font-size: 0.8rem;
+    }
+    
+    .giveaway-tables-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .giveaway-table-wrapper {
+        padding: 0.75rem;
+    }
+    
+    .giveaway-table-title {
+        font-size: 0.95rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .giveaway-table {
+        font-size: 0.75rem;
+    }
+    
+    .giveaway-table th,
+    .giveaway-table td {
+        padding: 0.5rem 0.3rem;
+    }
+    
+    .giveaway-table th {
+        font-size: 0.7rem;
+    }
+    
+    .giveaway-info-text {
+        padding: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    
+    .giveaway-info-paragraph {
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .giveaway-note {
+        font-size: 0.75rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+    
+    .giveaway-participate-section {
+        padding: 1rem;
+        margin-top: 1.25rem;
+    }
+    
+    .giveaway-participate-title {
+        font-size: 1.05rem;
+    }
+    
+    .giveaway-participate-subtitle {
+        font-size: 0.75rem;
+    }
+    
+    .giveaway-prize-cards {
+        gap: 0.75rem;
+    }
+    
+    .giveaway-prize-card {
+        padding: 1rem 0.75rem;
+    }
+    
+    .prize-card-icon {
+        font-size: 2rem;
+    }
+    
+    .prize-card-social {
+        font-size: 1rem;
+    }
+    
+    .giveaway-participate-btn {
+        font-size: 0.85rem;
+        padding: 0.6rem;
+    }
+    
+    .giveaway-winners-section {
+        padding: 0.75rem;
+    }
+    
+    .giveaway-winners-title {
+        font-size: 1rem;
+    }
+    
+    .giveaway-winner-item {
+        padding: 0.5rem 0.6rem;
+        flex-wrap: wrap;
+    }
+    
+    .winner-name {
+        font-size: 0.8rem;
+    }
+    
+    .winner-email {
+        font-size: 0.65rem;
+    }
+    
+    .giveaway-modal {
+        padding: 1.25rem;
+        width: 95%;
+        border-radius: 18px;
+    }
+    
+    .giveaway-modal-title {
+        font-size: 1.2rem;
+    }
+    
+    .slot-reel-window {
+        width: 65px;
+        height: 65px;
+    }
+    
+    .slot-symbol {
+        width: 65px;
+        height: 65px;
+        font-size: 2rem;
+    }
+    
+    .slot-reel-divider {
+        height: 65px;
+    }
+    
+    .slot-machine-frame {
+        padding: 1rem;
+    }
+    
+    .giveaway-spin-btn {
+        font-size: 1rem;
+        padding: 0.85rem;
+    }
 }
 
 /* Адаптивность для маленьких мобильных (480px и меньше) */
@@ -1391,11 +2477,6 @@ body::-webkit-scrollbar-thumb:hover {
 
     .wish-label {
         font-size: 0.95rem;
-    }
-
-    .wish-undo-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.8rem;
     }
 
     .wish-btn {
@@ -1541,142 +2622,3 @@ body::-webkit-scrollbar-thumb:hover {
         gap: 2rem;
     }
 }
-
-
-/* ==================== АНИМАЦИЯ КНОПКИ ЖДЁМС ==================== */
-
-/* Частицы при нажатии */
-.wish-particles-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 9999;
-    overflow: hidden;
-}
-
-.wish-particle {
-    position: absolute;
-    pointer-events: none;
-    font-size: 1.5rem;
-    animation: wishParticleFly 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-    will-change: transform, opacity;
-}
-
-@keyframes wishParticleFly {
-    0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(1) rotate(0deg);
-    }
-    50% {
-        opacity: 1;
-        transform: translate(var(--dx), var(--dy)) scale(1.3) rotate(180deg);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(calc(var(--dx) * 2), calc(var(--dy) * 2 - 80px)) scale(0.3) rotate(360deg);
-    }
-}
-
-/* Пульсация кольца вокруг кнопки при нажатии */
-.wish-btn-ring {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100%;
-    height: 100%;
-    border-radius: 12px;
-    border: 3px solid var(--primary-color);
-    pointer-events: none;
-    animation: wishRingPulse 0.8s ease-out forwards;
-}
-
-@keyframes wishRingPulse {
-    0% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(1.8);
-    }
-}
-
-/* Конфетти при выигрыше «Ждёмс» */
-.wish-confetti {
-    position: fixed;
-    top: -10px;
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
-    pointer-events: none;
-    z-index: 9999;
-    animation: wishConfettiFall 2.5s ease-in forwards;
-    will-change: transform, opacity;
-}
-
-@keyframes wishConfettiFall {
-    0% {
-        opacity: 1;
-        transform: translateY(0) rotate(0deg) scale(1);
-    }
-    50% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-        transform: translateY(100vh) rotate(720deg) scale(0.5);
-    }
-}
-
-/* Свечение кнопки при успешном нажатии */
-.wish-btn.wish-success-glow {
-    animation: wishSuccessGlow 1.5s ease-out !important;
-    opacity: 1 !important;
-}
-
-@keyframes wishSuccessGlow {
-    0% {
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 0 40px rgba(16, 185, 129, 0.6), 0 0 80px rgba(16, 185, 129, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 40px rgba(16, 185, 129, 0.6), 0 0 80px rgba(16, 185, 129, 0.4), 0 0 120px rgba(168, 85, 247, 0.3);
-    }
-    100% {
-        box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
-    }
-}
-
-/* Текст +1 при нажатии */
-.wish-plus-one {
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #10b981;
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
-    pointer-events: none;
-    animation: wishPlusOneFloat 1.2s ease-out forwards;
-    z-index: 10;
-}
-
-@keyframes wishPlusOneFloat {
-    0% {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0) scale(0.5);
-    }
-    30% {
-        opacity: 1;
-        transform: translateX(-50%) translateY(-20px) scale(1.3);
-    }
-    100% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-80px) scale(1);
-    }
-}
-
