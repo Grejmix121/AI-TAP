@@ -1204,14 +1204,40 @@ async function handleWishClick() {
         }
         
         if (wishBtn) {
-            wishBtn.classList.add('clicked');
-            wishBtn.innerHTML = '<span class="wish-btn-text">Спасибо за поддержку!</span><span class="wish-btn-emoji">💜</span>';
+            // --- КРАСИВАЯ АНИМАЦИЯ ---
+            const btnRect = wishBtn.getBoundingClientRect();
             
-            // Анимация успеха
-            wishBtn.style.transform = 'scale(1.1)';
+            // 1. Текст +1 над кнопкой
+            createPlusOne(wishBtn);
+            
+            // 2. Пульсирующее кольцо
+            createWishRing(wishBtn);
+            
+            // 3. Частицы-эмодзи разлетаются от кнопки
+            createWishParticles(btnRect);
+            
+            // 4. Конфетти сверху
+            createWishConfetti();
+            
+            // 5. Плавная смена кнопки с пружинкой
+            wishBtn.style.transform = 'scale(1.15)';
+            wishBtn.classList.add('wish-success-glow');
+            
             setTimeout(() => {
-                wishBtn.style.transform = 'scale(1)';
-            }, 200);
+                wishBtn.style.transform = 'scale(0.9)';
+                setTimeout(() => {
+                    wishBtn.style.transform = 'scale(1.05)';
+                    setTimeout(() => {
+                        wishBtn.style.transform = 'scale(1)';
+                    }, 100);
+                }, 100);
+            }, 150);
+            
+            setTimeout(() => {
+                wishBtn.classList.add('clicked');
+                wishBtn.innerHTML = '<span class="wish-btn-text">Спасибо за поддержку!</span><span class="wish-btn-emoji">💜</span>';
+                wishBtn.classList.remove('wish-success-glow');
+            }, 800);
         }
         
         if (wishNote) {
@@ -1901,125 +1927,23 @@ const SOCIAL_URLS = {
 };
 
 // Обработка нажатия на кнопку соцсети
-async function handleSocialClick(event, socialName) {
-    try {
-        event.preventDefault();
-        event.stopPropagation();
-        
-        // ВАЖНО: Всегда используем правильный URL из константы, а не из элемента
-        const url = SOCIAL_URLS[socialName];
-        
-        if (!url || url === '#') {
-            console.error('Неизвестная соцсеть:', socialName);
-            return; // Не можем перейти без URL
-        }
-        
-        // Для Telegram, Instagram и TikTok полностью удален счетчик нажатий - только переход по ссылке
-        // Эти счетчики обновляет бот с реальным количеством подписчиков
-        if (socialName !== 'telegram' && socialName !== 'instagram' && socialName !== 'tiktok') {
-            // ВАЖНО: Проверяем онлайн в Supabase, чтобы каждый пользователь мог голосовать только один раз
-            const hasClicked = await hasUserClicked(socialName);
-            
-            if (!hasClicked) {
-                // Сначала сохраняем информацию о клике в Supabase (реальная онлайн база)
-                await saveUserClick(socialName);
-                
-                // Увеличиваем счетчик в Supabase (реальный онлайн счетчик)
-                const currentCount = await loadCounterFromSupabase(socialName);
-                const newCount = await incrementCounterInSupabase(socialName);
-                
-                // Обновляем UI
-                const countElement = document.getElementById(socialName + 'Count');
-                if (countElement) {
-                    animateNumber(countElement, currentCount, newCount, 500);
-                }
-                
-                // Показываем уведомление
-                showSocialNotification(socialName);
-            }
-        } else {
-            // Для Telegram, Instagram и TikTok просто показываем уведомление о переходе (без счетчика нажатий)
-            // Счетчики обновляет бот с реальным количеством подписчиков
-            showSocialNotification(socialName);
-        }
-        
-        // Показываем загрузочный экран
-        const loadingScreen = document.getElementById('loadingScreen');
-        if (loadingScreen) {
-            loadingScreen.style.display = 'flex';
-            loadingScreen.style.opacity = '1';
-            loadingScreen.classList.remove('hidden');
-            loadingScreen.style.zIndex = '10000';
-            loadingScreen.style.visibility = 'visible';
-            
-            // Перезапускаем видео
-            const video = loadingScreen.querySelector('.loading-video');
-            if (video) {
-                video.currentTime = 0;
-                video.play().catch(() => {
-                    // Игнорируем ошибки автовоспроизведения
-                });
-            }
-        }
-        
-        // Переходим на правильную ссылку через 3 секунды
-        // Используем несколько методов для совместимости со всеми браузерами (включая Telegram, Instagram, TikTok встроенные браузеры)
-        setTimeout(() => {
-            if (url && url !== '#') {
-                // Определяем, находимся ли мы во встроенном браузере
-                const isInAppBrowser = /Telegram|Instagram|TikTok|Line|Kakao|WeChat|FBAN|FBAV/i.test(navigator.userAgent);
-                
-                try {
-                    if (isInAppBrowser) {
-                        // Для встроенных браузеров используем прямой переход
-                        console.log(`🔗 Встроенный браузер обнаружен, используем прямой переход: ${url}`);
-                        window.location.href = url;
-                    } else {
-                        // Для обычных браузеров пробуем открыть в новой вкладке
-                        const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-                        
-                        // Проверяем, открылось ли окно
-                        if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-                            // Если не получилось, используем прямой переход
-                            console.log(`🔗 Не удалось открыть в новой вкладке, используем прямой переход: ${url}`);
-                            window.location.href = url;
-                        } else {
-                            console.log(`🔗 Ссылка открыта в новой вкладке: ${url}`);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Ошибка открытия ссылки:', error);
-                    // Последняя попытка - прямой переход
-                    try {
-                        window.location.href = url;
-                    } catch (e) {
-                        console.error('Критическая ошибка открытия ссылки:', e);
-                        // Создаем временную ссылку как последний резерв
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.target = '_blank';
-                        link.rel = 'noopener noreferrer';
-                        link.style.display = 'none';
-                        document.body.appendChild(link);
-                        link.click();
-                        setTimeout(() => {
-                            document.body.removeChild(link);
-                        }, 100);
-                    }
-                }
-            }
-            // Скрываем загрузочный экран через небольшую задержку
-            setTimeout(() => {
-                hideLoadingScreen();
-            }, 500);
-        }, 3000);
-    } catch (error) {
-        console.error('Ошибка при обработке клика соцсети:', error);
-        // В случае ошибки все равно открываем ссылку
-        const url = SOCIAL_URLS[socialName];
-        if (url && url !== '#') {
-            window.open(url, '_blank', 'noopener,noreferrer');
-        }
+function handleSocialClick(event, socialName) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const url = SOCIAL_URLS[socialName];
+    if (!url || url === '#') return;
+    
+    // Определяем тип устройства
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isInAppBrowser = /Telegram|Instagram|TikTok|Line|Kakao|WeChat|FBAN|FBAV/i.test(navigator.userAgent);
+    
+    if (isMobile || isInAppBrowser) {
+        // На мобильных/встроенных браузерах — обычный переход (не дублирует)
+        window.location.href = url;
+    } else {
+        // На ПК — открываем ТОЛЬКО в новой вкладке (не трогаем текущую)
+        window.open(url, '_blank', 'noopener,noreferrer');
     }
 }
 
@@ -2287,7 +2211,7 @@ async function handleGiveawaySubmit(event) {
     await new Promise(r => setTimeout(r, 2500));
     clearInterval(phraseInterval);
     
-    const result = await conductGiveaway(currentGiveawayType, email);
+    const result = await conductGiveawayWithTest(currentGiveawayType, email);
     showGiveawayResult(result, email);
 }
 
@@ -2357,10 +2281,224 @@ async function handleParticipate(type) {
     openGiveawayModal(type);
 }
 
+// ==================== ТЕСТОВАЯ ПАНЕЛЬ ====================
+// Доступ по ?admin=1 в URL. НЕ меняет счётчики подписчиков.
+
+let testGiveawayOverrides = {};
+
+// Показать тест-панель если ?admin=1
+(function initTestPanel() {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('admin') === '1') {
+        const panel = document.getElementById('testPanel');
+        if (panel) panel.style.display = 'block';
+    }
+})();
+
+// Активировать розыгрыш (тестовый режим — не трогает счётчики)
+function testActivateGiveaway(type) {
+    testGiveawayOverrides[type] = true;
+    const cfg = GIVEAWAYS[type];
+    const name = cfg ? cfg.name : type;
+    showNotification(`🧪 ${name} розыгрыш активирован (тест)`, 'success');
+    
+    // Обновляем UI карточки — кнопка становится активной
+    const btn = document.getElementById(`participate-btn-${type}`);
+    const statusEl = document.getElementById(`status-${type}`);
+    if (btn) { btn.disabled = false; btn.textContent = 'Участвовать'; }
+    if (statusEl) {
+        const st = statusEl.querySelector('.giveaway-status-text');
+        if (st) { st.textContent = '🧪 Розыгрыш активен (тест)'; st.className = 'giveaway-status-text active'; }
+    }
+}
+
+// Сброс тестовых розыгрышей
+function testResetGiveaways() {
+    testGiveawayOverrides = {};
+    showNotification('↺ Тестовые розыгрыши сброшены', 'info');
+    updateParticipationTable();
+}
+
+// Сброс кнопки «Ждёмс» только для текущего пользователя
+async function testResetWish() {
+    try {
+        const client = getSupabaseClient();
+        if (!client) { showNotification('❌ Нет подключения к БД', 'error'); return; }
+        
+        const fingerprint = getUserFingerprint();
+        
+        // Удаляем запись клика для этого fingerprint
+        await client.from('startzero_user_clicks')
+            .delete()
+            .eq('fingerprint', fingerprint)
+            .eq('counter_type', 'wish');
+        
+        // Уменьшаем счётчик на 1
+        const currentCount = await loadCounterFromSupabase('wish');
+        if (currentCount > 0) {
+            await client.from('startzero_counters')
+                .update({ count: currentCount - 1 })
+                .eq('counter_type', 'wish');
+        }
+        
+        // Сбрасываем localStorage
+        localStorage.removeItem(WISH_STORAGE_KEY);
+        
+        // Обновляем UI
+        const wishBtn = document.getElementById('wishBtn');
+        const wishNote = document.getElementById('wishNote');
+        const wishCountEl = document.getElementById('wishCount');
+        
+        if (wishBtn) {
+            wishBtn.disabled = false;
+            wishBtn.classList.remove('clicked');
+            wishBtn.innerHTML = '<span class="wish-btn-text">Ждёмс!</span><span class="wish-btn-emoji">✨</span>';
+        }
+        if (wishNote) { wishNote.style.display = 'none'; }
+        
+        // Перезагружаем реальный счётчик
+        const newCount = await loadCounterFromSupabase('wish');
+        if (wishCountEl) wishCountEl.textContent = formatNumber(newCount);
+        
+        showNotification('🔄 Кнопка «Ждёмс» сброшена для вас', 'success');
+    } catch (e) {
+        console.error('Ошибка сброса:', e);
+        showNotification('❌ Ошибка сброса', 'error');
+    }
+}
+
+// Переопределяем handleParticipate чтобы учитывать тестовые оверрайды
+const _originalHandleParticipate = handleParticipate;
+async function handleParticipateWithTest(type) {
+    // Если тестовый режим — пропускаем проверку порога
+    if (testGiveawayOverrides[type]) {
+        openGiveawayModal(type);
+        return;
+    }
+    return _originalHandleParticipate(type);
+}
+
+// Переопределяем conductGiveaway чтобы не проверять порог в тесте
+const _originalConductGiveaway = conductGiveaway;
+async function conductGiveawayWithTest(social, email) {
+    // Если тестовый оверрайд — подменяем проверку порога
+    if (testGiveawayOverrides[social]) {
+        const client = getSupabaseClient();
+        if (!client) return { error: 'Нет подключения к БД' };
+        
+        email = email.toLowerCase().trim();
+        const cfg = GIVEAWAYS[social];
+        if (!cfg) return { error: 'Неизвестная соцсеть' };
+        
+        if (await hasParticipated(email, social))
+            return { error: 'Вы уже участвовали в этом розыгрыше.' };
+        
+        // Пропускаем проверку порога — сразу к розыгрышу
+        const wins = await getWinCount(social);
+        const remaining = cfg.maxWins - wins;
+        if (remaining <= 0) return { error: 'Все призовые места уже разыграны.' };
+        
+        const prob = Math.min(remaining / cfg.maxWins, 0.50);
+        const won = Math.random() < prob;
+        
+        if (won) {
+            await client.from('startzero_giveaway_winners').insert({
+                email, threshold: social, prize_level: social,
+                prize_details: { title: cfg.prize.title, social, test: true }
+            });
+            return { won: true, prize: cfg.prize };
+        } else {
+            await client.from('startzero_giveaway_winners').insert({
+                email, threshold: social, prize_level: 'loss',
+                prize_details: { social, result: 'loss', test: true }
+            });
+            return { won: false };
+        }
+    }
+    return _originalConductGiveaway(social, email);
+}
+
+// ==================== КРАСИВАЯ АНИМАЦИЯ КНОПКИ «ЖДЁМС» ====================
+
+// Создаём эффект частиц при нажатии
+function createWishParticles(btnRect) {
+    const container = document.createElement('div');
+    container.className = 'wish-particles-container';
+    document.body.appendChild(container);
+    
+    const emojis = ['✨', '💜', '⭐', '🌟', '💫', '🎉', '🎊', '🔮', '💎', '🦋'];
+    const cx = btnRect.left + btnRect.width / 2;
+    const cy = btnRect.top + btnRect.height / 2;
+    
+    for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'wish-particle';
+        particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        
+        const angle = (Math.PI * 2 * i) / 20 + (Math.random() - 0.5) * 0.5;
+        const dist = 80 + Math.random() * 120;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+        
+        particle.style.left = cx + 'px';
+        particle.style.top = cy + 'px';
+        particle.style.setProperty('--dx', dx + 'px');
+        particle.style.setProperty('--dy', dy + 'px');
+        particle.style.animationDelay = (Math.random() * 0.3) + 's';
+        particle.style.fontSize = (1 + Math.random() * 1.5) + 'rem';
+        
+        container.appendChild(particle);
+    }
+    
+    setTimeout(() => container.remove(), 2500);
+}
+
+// Создаём конфетти
+function createWishConfetti() {
+    const colors = ['#a855f7', '#ec4899', '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#f43f5e', '#06b6d4'];
+    
+    for (let i = 0; i < 40; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'wish-confetti';
+        confetti.style.left = (Math.random() * 100) + 'vw';
+        confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.width = (6 + Math.random() * 8) + 'px';
+        confetti.style.height = (6 + Math.random() * 8) + 'px';
+        confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        confetti.style.animationDelay = (Math.random() * 1) + 's';
+        confetti.style.animationDuration = (2 + Math.random() * 1.5) + 's';
+        
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 4000);
+    }
+}
+
+// Создаём текст "+1" над кнопкой
+function createPlusOne(btn) {
+    const plusOne = document.createElement('div');
+    plusOne.className = 'wish-plus-one';
+    plusOne.textContent = '+1';
+    btn.style.position = 'relative';
+    btn.appendChild(plusOne);
+    setTimeout(() => plusOne.remove(), 1200);
+}
+
+// Пульсирующее кольцо вокруг кнопки
+function createWishRing(btn) {
+    const ring = document.createElement('div');
+    ring.className = 'wish-btn-ring';
+    btn.style.position = 'relative';
+    btn.appendChild(ring);
+    setTimeout(() => ring.remove(), 800);
+}
+
 // Экспорт функций
 window.handleWishClick = handleWishClick;
 window.handleSocialClick = handleSocialClick;
-window.handleParticipate = handleParticipate;
+window.handleParticipate = handleParticipateWithTest;
 window.openGiveawayModal = openGiveawayModal;
 window.closeGiveawayModal = closeGiveawayModal;
 window.handleGiveawaySubmit = handleGiveawaySubmit;
+window.testActivateGiveaway = testActivateGiveaway;
+window.testResetGiveaways = testResetGiveaways;
+window.testResetWish = testResetWish;
