@@ -763,22 +763,7 @@ body::-webkit-scrollbar-thumb:hover {
     font-style: italic;
 }
 
-/* Инфо в суммарном розыгрыше */
-.giveaway-combined-pool-info {
-    text-align: center;
-    padding: 0.5rem 0.75rem;
-    margin: 0.5rem 0;
-}
-
-.giveaway-combined-pool-info p {
-    font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.85);
-    line-height: 1.5;
-}
-
-.giveaway-combined-pool-info strong {
-    color: var(--primary-color);
-}
+/* (удалено: суммарный розыгрыш) */
 
 .giveaway-social-status {
     padding: 0.5rem 0.75rem;
@@ -801,68 +786,7 @@ body::-webkit-scrollbar-thumb:hover {
     color: #f59e0b;
 }
 
-/* Суммарный розыгрыш */
-.giveaway-combined-wrapper {
-    margin-top: 1.5rem;
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(59, 130, 246, 0.2));
-    border: 2px solid rgba(168, 85, 247, 0.4);
-    text-align: center;
-}
-
-.giveaway-combined-prizes {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin: 0.75rem 0;
-}
-
-.giveaway-combined-info {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin: 0.75rem 0;
-}
-
-.giveaway-combined-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.25rem;
-    background: rgba(0, 0, 0, 0.2);
-    padding: 0.6rem 1rem;
-    border-radius: 10px;
-    border: 1px solid rgba(168, 85, 247, 0.2);
-    min-width: 120px;
-}
-
-.giveaway-combined-stat .stat-label {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.giveaway-combined-stat .stat-value {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
-}
-
-.giveaway-combined-status {
-    padding: 0.5rem 0.75rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    margin-bottom: 0.75rem;
-}
-
-.limit-reached-text {
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.6);
-    margin-top: 0.5rem;
-    font-style: italic;
-    text-align: center;
-}
+/* (удалено: суммарный розыгрыш) */
 
 /* Карточки выигрышей в результате */
 .giveaway-win-cards {
@@ -1373,29 +1297,7 @@ body::-webkit-scrollbar-thumb:hover {
     }
 }
 
-/* Тестовая панель */
-.test-btn {
-    padding: 0.6rem 1.2rem;
-    background: rgba(255, 193, 7, 0.2);
-    border: 2px solid rgba(255, 193, 7, 0.4);
-    border-radius: 8px;
-    color: #ffc107;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.test-btn:hover {
-    background: rgba(255, 193, 7, 0.3);
-    border-color: rgba(255, 193, 7, 0.6);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
-}
-
-.test-btn:active {
-    transform: translateY(0);
-}
+/* (удалено: тестовая панель) */
 
 /* Информация о проекте */
 .project-info {
@@ -2022,10 +1924,6 @@ body::-webkit-scrollbar-thumb:hover {
         font-size: 0.7rem;
     }
     
-    .giveaway-combined-stat .stat-value {
-        font-size: 1.1rem;
-    }
-    
     .participate-btn {
         padding: 0.5rem 0.8rem;
         font-size: 0.75rem;
@@ -2236,15 +2134,6 @@ body::-webkit-scrollbar-thumb:hover {
     .giveaway-prize-img {
         width: 35px;
         height: 35px;
-    }
-    
-    .giveaway-combined-info {
-        gap: 0.75rem;
-    }
-    
-    .giveaway-combined-stat {
-        min-width: 100px;
-        padding: 0.5rem 0.75rem;
     }
     
     .participate-btn {
