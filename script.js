@@ -2366,14 +2366,39 @@ async function handleParticipate(type) {
 
 let testGiveawayOverrides = {};
 
-// Показать тест-панель если ?admin=1
-(function initTestPanel() {
+// Показать тест-панель: ?admin=1 в URL ИЛИ тройной клик на заголовок розыгрыша
+function initTestPanel() {
+    const panel = document.getElementById('testPanel');
+    if (!panel) return;
+    
+    // Автопоказ по ?admin=1
     const params = new URLSearchParams(window.location.search);
     if (params.get('admin') === '1') {
-        const panel = document.getElementById('testPanel');
-        if (panel) panel.style.display = 'block';
+        panel.style.display = 'block';
     }
-})();
+    
+    // Тройной клик на заголовок «Розыгрыш VIP подписок» тоже показывает панель
+    const giveawayTitle = document.querySelector('.giveaway-title');
+    if (giveawayTitle) {
+        let clickCount = 0;
+        let clickTimer = null;
+        giveawayTitle.addEventListener('click', () => {
+            clickCount++;
+            if (clickTimer) clearTimeout(clickTimer);
+            if (clickCount >= 3) {
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+                clickCount = 0;
+            }
+            clickTimer = setTimeout(() => { clickCount = 0; }, 800);
+        });
+    }
+}
+// Вызываем после загрузки DOM
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTestPanel);
+} else {
+    initTestPanel();
+}
 
 // Активировать розыгрыш (тестовый режим — не трогает счётчики)
 function testActivateGiveaway(type) {
