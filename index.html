@@ -168,10 +168,16 @@
                         <span class="wish-number" id="wishCount">0</span>
                         <span class="wish-label">человек уже ждут</span>
                     </div>
-                    <button class="wish-btn" id="wishBtn" onclick="handleWishClick()">
-                        <span class="wish-btn-text">Ждёмс!</span>
-                        <span class="wish-btn-emoji">✨</span>
-                    </button>
+                    <div class="wish-buttons-row">
+                        <button class="wish-btn" id="wishBtn" onclick="handleWishClick()">
+                            <span class="wish-btn-text">Ждёмс!</span>
+                            <span class="wish-btn-emoji">✨</span>
+                        </button>
+                        <button class="wish-undo-btn" id="wishUndoBtn" onclick="handleWishUndo()" style="display: none;">
+                            <span class="wish-undo-icon">↩</span>
+                            <span class="wish-undo-text">Отменить</span>
+                        </button>
+                    </div>
                     <p class="wish-note" id="wishNote"></p>
                 </div>
             </div>
