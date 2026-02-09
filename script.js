@@ -2286,8 +2286,9 @@ async function updateParticipationTable() {
         
         if (active) {
             const minsLeft = Math.ceil(active.timeLeft / 60000);
+            const displayWins = testOverrides.lowPrizeTarget === 'combined' ? (COMBINED_MAX_WINS - 1) : active.wins;
             if (milestoneEl) milestoneEl.textContent = active.milestone.toLocaleString('ru-RU');
-            if (winsCountEl) winsCountEl.textContent = `${active.wins.toLocaleString('ru-RU')} / ${active.maxWins.toLocaleString('ru-RU')}`;
+            if (winsCountEl) winsCountEl.textContent = `${displayWins.toLocaleString('ru-RU')} / ${active.maxWins.toLocaleString('ru-RU')}`;
             if (statusComb) {
                 const st = statusComb.querySelector('.giveaway-status-text');
                 const testLabel = testOverrides.combined ? '🧪 ' : '';
@@ -2385,8 +2386,9 @@ async function conductCombinedGiveaway(milestone, email) {
     if (!active || active.milestone !== milestone)
         return { results: [], error: 'Этот порог уже завершён.' };
     
-    // Проверяем лимит выигрышей
-    if (active.wins >= COMBINED_MAX_WINS)
+    // Проверяем лимит выигрышей (с учётом тест-оверрайда)
+    const checkWins = testOverrides.lowPrizeTarget === 'combined' ? (COMBINED_MAX_WINS - 1) : active.wins;
+    if (checkWins >= COMBINED_MAX_WINS)
         return { results: [], error: 'Все призовые места на этом пороге заняты.' };
     
     const thresholdName = `combined_${milestone}`;
@@ -2622,19 +2624,24 @@ async function handleParticipate(type) {
 async function testActivateGiveaway(type) {
     if (type === 'combined') {
         testOverrides.combined = true;
-        // Создаём порог в БД если нет
+        // Создаём/обновляем порог в БД (сбрасываем таймер)
         const client = getSupabaseClient();
         if (client) {
-            const ct = `combined_milestone_${COMBINED_STEP}`;
-            const { data } = await client.from('startzero_counters').select('counter_type').eq('counter_type', ct).maybeSingle();
-            if (!data) {
-                await client.from('startzero_counters').upsert(
-                    { counter_type: ct, count: 1, updated_at: new Date().toISOString() },
-                    { onConflict: 'counter_type', ignoreDuplicates: true }
-                );
+            // Удаляем все старые пороги и создаём свежий
+            const { data: existing } = await client.from('startzero_counters')
+                .select('counter_type').like('counter_type', 'combined_milestone_%');
+            if (existing) {
+                for (const m of existing) {
+                    await client.from('startzero_counters').delete().eq('counter_type', m.counter_type);
+                }
             }
+            const ct = `combined_milestone_${COMBINED_STEP}`;
+            await client.from('startzero_counters').upsert(
+                { counter_type: ct, count: 1, updated_at: new Date().toISOString() },
+                { onConflict: 'counter_type' }
+            );
         }
-        showNotification('🧪 Суммарный розыгрыш активирован (тест)', 'success');
+        showNotification('🧪 Суммарный розыгрыш активирован (тест, порог сброшен)', 'success');
     } else {
         testOverrides[type] = true;
         const name = INDIVIDUAL_GIVEAWAYS[type]?.name || type;
@@ -2667,15 +2674,22 @@ async function testSkipCombinedTime() {
     } catch (e) { console.error(e); showNotification('❌ Ошибка', 'error'); }
 }
 
-// 3. Установить 1 призовое место на розыгрыше
-function testSetOnePrize() {
+// 3. Установить 1 призовое место на розыгрыше (+ автоматически активирует)
+async function testSetOnePrize() {
     const sel = document.getElementById('testLowPrizeSelect');
     if (!sel) return;
     const target = sel.value;
     testOverrides.lowPrizeTarget = target;
+    // Автоматически активируем розыгрыш если ещё не активен
+    if (target === 'combined') {
+        if (!testOverrides.combined) await testActivateGiveaway('combined');
+    } else {
+        if (!testOverrides[target]) await testActivateGiveaway(target);
+    }
     const name = target === 'combined' ? 'Суммарный' : (INDIVIDUAL_GIVEAWAYS[target]?.name || target);
     showNotification(`🎯 ${name}: осталось 1 призовое место (тест)`, 'success');
-    updateParticipationTable();
+    invalidateGiveawayCache();
+    await updateParticipationTable();
 }
 
 // 4. Сброс всех тест-оверрайдов
